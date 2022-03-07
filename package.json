@@ -1,0 +1,55 @@
+{
+  "name": "blueprint",
+  "version": "0.0.0",
+  "description": "",
+  "engines": {
+    "node": ">= 16.0.0",
+    "npm": ">= 8.0.0"
+  },
+  "scripts": {
+    "fix": "concurrently npm:lint-* --raw --max-processes 1",
+    "fix-eslint": "eslint . --ext .js,.vue --fix --cache --cache-location node_modules/.cache/.eslintcache --ignore-path .gitignore",
+    "fix-prettier": "prettier \"**/*.{htm,html,json,md,markdown,yml,yaml}\" --write --ignore-path .gitignore",
+    "lint": "concurrently npm:lint-* --raw --max-processes 1",
+    "lint-eslint": "eslint . --ext .js,.vue --cache --cache-location node_modules/.cache/.eslintcache --ignore-path .gitignore",
+    "lint-prettier": "prettier \"**/*.{htm,html,json,md,markdown,yml,yaml}\" --check --ignore-path .gitignore"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/noop-inc/blueprint.git"
+  },
+  "author": "Derek Wolpert",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/noop-inc/blueprint/issues"
+  },
+  "homepage": "https://github.com/noop-inc/blueprint#readme",
+  "devDependencies": {
+    "concurrently": "^7.0.0",
+    "eslint": "^8.10.0",
+    "eslint-config-standard": "^17.0.0-1",
+    "eslint-plugin-vue": "^8.5.0"
+  },
+  "eslintConfig": {
+    "root": true,
+    "extends": [
+      "plugin:vue/recommended",
+      "eslint:recommended",
+      "standard"
+    ]
+  },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "trailingComma": "none",
+    "arrowParens": "avoid"
+  },
+  "lint-staged": {
+    "**/*.{js,cjs,mjs,vue}": [
+      "eslint --fix --cache --cache-location node_modules/.cache/.eslintcache --ignore-path .gitignore"
+    ],
+    "**/*.{htm,html,json,md,markdown,yml,yaml}": [
+      "prettier --write --ignore-path .gitignore"
+    ]
+  }
+}
