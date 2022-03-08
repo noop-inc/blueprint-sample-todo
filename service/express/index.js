@@ -2,26 +2,32 @@ import express from 'express'
 import { DynamoDBClient, ListTablesCommand } from '@aws-sdk/client-dynamodb'
 import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3'
 
-// const TableName = process.env.DYNAMODB_TABLE
-const region = process.env.AWS_REGION
+const AWSRegion = process.env.AWS_REGION
+
+const DynamoDbEndpoint = process.env.DYNAMODB_ENDPOINT
+// const DynamoDbTable = process.env.DYNAMODB_TABLE
+
+const S3Endpoint = process.env.S3_ENDPOINT
+const S3Bucket = process.env.S3_BUCKET
 
 const dynamo = new DynamoDBClient({
-  endpoint: process.env.DYNAMODB_ENDPOINT,
-  signingRegion: region
+  endpoint: DynamoDbEndpoint,
+  signingRegion: AWSRegion
 })
-const dynamoCmd = new ListTablesCommand({})
+const dynamoDbCmd = new ListTablesCommand({})
 try {
-  const results = await dynamo.send(dynamoCmd)
+  const results = await dynamo.send(dynamoDbCmd)
   console.log(results)
 } catch (err) {
   console.error(err)
 }
 
 const s3 = new S3Client({
-  endpoint: process.env.S3_ENDPOINT,
-  signingRegion: region
+  endpoint: S3Endpoint
 })
-const s3Cmd = new ListObjectsV2Command({ Bucket: process.env.S3_BUCKET })
+const s3Cmd = new ListObjectsV2Command({
+  Bucket: S3Bucket
+})
 try {
   const results = await s3.send(s3Cmd)
   console.log(results)
