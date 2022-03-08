@@ -19,7 +19,7 @@ const dynamoDbCmd = new DescribeTableCommand({
 })
 try {
   const results = await dynamo.send(dynamoDbCmd)
-  console.log(results)
+  console.log(JSON.stringify(results))
 } catch (err) {
   console.error(err)
 }
@@ -32,7 +32,7 @@ const s3Cmd = new ListObjectsV2Command({
 })
 try {
   const results = await s3.send(s3Cmd)
-  console.log(results)
+  console.log(JSON.stringify(results))
 } catch (err) {
   console.error(err)
 }
