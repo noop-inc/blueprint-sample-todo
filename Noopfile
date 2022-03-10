@@ -15,7 +15,7 @@ COPY /static/vue/src ./src
 RUN npm run build
 
 # ASSETS dist --single-page-mode --index-file index.html
-EXPOSE 4173
+EXPOSE 5000
 CMD ["npm", "run", "preview"]
 
 COMPONENT express service
@@ -32,7 +32,7 @@ COPY /service/express/package*.json ./
 RUN npm ci
 COPY /service/express/index.js ./
 
-EXPOSE 80
+EXPOSE 3000
 CMD ["npm", "start"]
 
 ENV DYNAMODB_TABLE $.resources.DynamoDBTable.tableName

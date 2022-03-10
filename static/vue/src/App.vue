@@ -3,33 +3,56 @@ import { ref, unref, watch } from 'vue'
 
 const showModal = ref(false)
 const formDesciption = ref(null)
-const formAttachment = ref(null)
+const formAttachments = ref([])
 const attachmentInput = ref(null)
+const invalidDesciption = ref(false)
 
-const clearAttachment = () => {
-  if (unref(attachmentInput)) unref(attachmentInput).value = null
-  formAttachment.value = null
+const assignAttachment = () => {
+  const file = unref(attachmentInput).files[0]
+  // console.log(file)
+  formAttachments.value = [...formAttachments.value, { file, key: Date.now(), src: URL.createObjectURL(file) }]
+  unref(attachmentInput).value = null
+  // attachmentSrc.value = URL.createObjectURL(formAttachment.value)
+  // console.log(unref(attachmentInput).files)
 }
 
-watch(showModal, () => {
+const removeAttachment = idx => {
+  formAttachments.value = unref(formAttachments).filter((_, i) => i !== idx)
+}
+
+const clearForm = () => {
   formDesciption.value = null
-  clearAttachment()
+  formAttachments.value = []
+}
+
+watch(showModal, clearForm)
+
+watch(formDesciption, () => {
+  if (unref(invalidDesciption)) invalidDesciption.value = false
 })
 
-// const res = await fetch(
-//   'https://blueprint.local.noop.app/api/todos',
-//   {
-//     method: 'POST',
-//     headers: {
-//       'Content-Type': 'application/json'
-//     },
-//     body: JSON.stringify({
-//       description: 'foo bar'
-//     })
-//   }
-// )
-// const { data } = await res.json()
+const handleSubmit = async () => {
+  if (!unref(formDesciption)) {
+    invalidDesciption.value = true
+  } else {
+    const formData = new FormData()
+    formData.append('description', unref(formDesciption))
+    unref(formAttachments).forEach(({ file }) => {
+      formData.append('attachments', file)
+    })
 
+    const res = await fetch(
+      '/api/todos',
+      {
+        method: 'POST',
+        body: formData
+      }
+    )
+    const { data } = await res.json()
+    showModal.value = false
+    console.log(data)
+  }
+}
 </script>
 
 <template>
@@ -60,15 +83,15 @@ watch(showModal, () => {
   >
     <form
       class="todo-form"
-      enctype="multipart/form-data"
-      method="post"
+      @submit.prevent="handleSubmit"
       @click.stop
     >
-      <div>
+      <div class="todo-form-row">
         <h5 class="todo-form-header">
           <button
             class="todo-close"
             title="Close modal"
+            type="button"
             @click="showModal = false"
           >
             {{ '×' }}
@@ -77,7 +100,7 @@ watch(showModal, () => {
         </h5>
       </div>
       <hr class="divider">
-      <div>
+      <div class="todo-form-row">
         <label for="form-description">Description (required)</label>
         <input
           id="form-description"
@@ -86,29 +109,30 @@ watch(showModal, () => {
           autocomplete="off"
           placeholder="What needs to be done?"
         >
+        <label v-if="invalidDesciption" class="form-error">Todo description is required</label>
       </div>
-      <div>
-        <label for="form-attachment">Attachment (optional, PNG or JPG, 2MB max)</label>
-        <span>
-          <input
-            id="form-attachment"
-            ref="attachmentInput"
-            type="file"
-            accept=".jpg, .jpeg, .png"
-            @change="formAttachment = $event"
-          >
-          <button
-            v-if="formAttachment"
-            title="Remove attachment"
-            class="form-remove"
-            @click.stop.prevent="clearAttachment"
-          >
-            {{ '×' }}
-          </button>
-        </span>
+      <div class="todo-form-row">
+        <label for="form-attachment">Attachments (optional, PNG or JPG)</label>
+        <input
+          id="form-attachment"
+          ref="attachmentInput"
+          type="file"
+          accept=".jpg, .jpeg, .png"
+          @input="assignAttachment"
+        >
+        <div class="form-preview-grid">
+          <span v-for="({ src, key }, idx) in formAttachments" :key="key" class="form-preview-image">
+            <img :src="src">
+            <button type="button" class="form-preview-remove" title="Remove Attachment" @click.prevent="removeAttachment(idx)">
+              <span>
+                {{ '×' }}
+              </span>
+            </button>
+          </span>
+        </div>
       </div>
       <hr class="divider">
-      <div>
+      <div class="todo-form-row">
         <input
           id="form-submit"
           type="submit"
@@ -165,9 +189,9 @@ watch(showModal, () => {
 }
 
 .todo-header h1 span {
-  font-size: 0.75em;
+  /* font-size: 0.75em; */
   font-family: 'Brush Script MT', cursive;
-  letter-spacing: 1px;
+  /* letter-spacing: 1px; */
 }
 
 .todo-modal {
@@ -220,15 +244,9 @@ watch(showModal, () => {
   background: none;
 }
 
-.todo-form div {
+.todo-form-row {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-}
-
-.todo-form div span {
-  display: flex;
-  align-items: center;
   gap: 0.5rem;
 }
 
@@ -242,6 +260,10 @@ watch(showModal, () => {
 .todo-form label {
   font-size: 0.75rem;
   color: var(--bs-dark);
+}
+
+.todo-form .form-error {
+  color: var(--bs-danger);
 }
 
 #form-description {
@@ -269,23 +291,62 @@ input::placeholder {
 }
 
 #form-attachment {
-  flex: 1;
-}
-
-.form-remove {
-  font-size: 1.25rem;
-  color: var(--bs-danger);
-  display: flex;
-  align-items: center;
-  margin-right: -0.5rem;
-  padding: 0 0.5rem;
-  cursor: pointer;
-  border: none;
-  background: none;
+  color: transparent;
+  user-select: none;
 }
 
 #form-attachment::file-selector-button {
   margin-right: 0.5rem;
+}
+
+.form-preview-grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  overflow: hidden;
+  gap: 0.5rem;
+}
+
+.form-preview-image {
+  width: max(25%, 8rem);
+  border: var(--bs-gray-400) solid;
+  border-radius: 0.25rem;
+  height: 8rem;
+  flex-grow: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.form-preview-image img {
+  max-height: 100%;
+  min-width: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.form-preview-remove {
+  opacity: 0;
+  background-color: rgb(0 0 0 / 50%);
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+
+.form-preview-remove:hover,
+.form-preview-remove:focus {
+  opacity: 1;
+  cursor: pointer;
+}
+
+.form-preview-remove span {
+  color: var(--bs-danger);
+  font-size: 4rem;
 }
 
 #form-attachment::file-selector-button {

@@ -5,13 +5,15 @@ import vue from '@vitejs/plugin-vue'
 export default defineConfig({
   plugins: [vue()],
   server: {
+    port: 8080,
     hmr: {
       protocol: 'ws',
       host: 'localhost',
-      port: 3000
+      port: 8080
     }
   },
   preview: {
-    host: true
+    host: true,
+    port: 5000
   }
 })
