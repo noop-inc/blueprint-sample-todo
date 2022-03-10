@@ -1,4 +1,5 @@
-COMPONENT vue static
+# COMPONENT vue static
+COMPONENT vue service
 
 ROUTE *
 
@@ -13,13 +14,15 @@ COPY /static/vue/public ./public
 COPY /static/vue/src ./src
 RUN npm run build
 
-ASSETS dist --single-page-mode --index-file index.html
+# ASSETS dist --single-page-mode --index-file index.html
+EXPOSE 4173
+CMD ["npm", "run", "preview"]
 
 COMPONENT express service
 
 ROUTE /api/*
 
-RESOURCE DynamoDBTable dynamodb -s hashKeyName=id -s hashKeyType=N
+RESOURCE DynamoDBTable dynamodb -s hashKeyName=id -s hashKeyType=S
 RESOURCE S3Bucket s3
 
 FROM node:16-alpine
