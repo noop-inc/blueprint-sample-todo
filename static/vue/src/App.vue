@@ -1,31 +1,58 @@
 <script setup>
-import { ref, unref, watch } from 'vue'
+import { ref, unref, watch, onMounted } from 'vue'
 
-const showModal = ref(false)
+const todos = ref([])
+const showCreateForm = ref(false)
 const formDesciption = ref(null)
-const formAttachments = ref([])
-const attachmentInput = ref(null)
+const formImages = ref([])
+const imageInput = ref(null)
 const invalidDesciption = ref(false)
+const invalidImageCount = ref(false)
+const invalidImageSize = ref(false)
+const enlargedImage = ref(null)
 
-const assignAttachment = () => {
-  const file = unref(attachmentInput).files[0]
-  // console.log(file)
-  formAttachments.value = [...formAttachments.value, { file, key: Date.now(), src: URL.createObjectURL(file) }]
-  unref(attachmentInput).value = null
-  // attachmentSrc.value = URL.createObjectURL(formAttachment.value)
-  // console.log(unref(attachmentInput).files)
+const assignImages = () => {
+  const files = [...unref(imageInput).files]
+  const filterValidSize = files.filter(file => file.size <= 1000000)
+  invalidImageSize.value = files.length !== filterValidSize.length
+  invalidImageCount.value = (unref(formImages).length + filterValidSize.length) > 6
+  const sliceLength = filterValidSize.slice(0, 6 - unref(formImages).length)
+  const formattedFiles = sliceLength.map(file => ({
+    file,
+    key: window.crypto.getRandomValues(new Uint32Array(1))[0],
+    src: URL.createObjectURL(file)
+  }))
+  formImages.value = [...unref(formImages), ...formattedFiles]
+  unref(imageInput).value = null
 }
 
-const removeAttachment = idx => {
-  formAttachments.value = unref(formAttachments).filter((_, i) => i !== idx)
+const removeImage = idx => {
+  invalidImageCount.value = false
+  invalidImageSize.value = false
+  formImages.value = unref(formImages).filter((_, i) => i !== idx)
 }
 
 const clearForm = () => {
   formDesciption.value = null
-  formAttachments.value = []
+  formImages.value = []
+  invalidDesciption.value = false
+  invalidImageCount.value = false
 }
 
-watch(showModal, clearForm)
+const closeModal = () => {
+  showCreateForm.value = false
+  enlargedImage.value = null
+}
+
+watch(showCreateForm, clearForm)
+
+watch([showCreateForm, enlargedImage], () => {
+  if (unref(showCreateForm) || unref(enlargedImage)) {
+    window.document.body.style.overflow = 'hidden'
+  } else {
+    window.document.body.style.overflow = null
+  }
+})
 
 watch(formDesciption, () => {
   if (unref(invalidDesciption)) invalidDesciption.value = false
@@ -37,8 +64,8 @@ const handleSubmit = async () => {
   } else {
     const formData = new FormData()
     formData.append('description', unref(formDesciption))
-    unref(formAttachments).forEach(({ file }) => {
-      formData.append('attachments', file)
+    unref(formImages).forEach(({ file }) => {
+      formData.append('images', file)
     })
 
     const res = await fetch(
@@ -48,40 +75,95 @@ const handleSubmit = async () => {
         body: formData
       }
     )
-    const { data } = await res.json()
-    showModal.value = false
-    console.log(data)
+    const data = await res.json()
+    todos.value = [...unref(todos), data]
+    showCreateForm.value = false
   }
 }
+
+const getAllTodos = async () => {
+  const res = await fetch('/api/todos')
+  const data = await res.json()
+  todos.value = data.sort((a, b) => a.created - b.created)
+}
+
+onMounted(() => {
+  getAllTodos()
+})
 </script>
 
 <template>
   <header class="todo-header">
     <h1>
-      {{ 'Noop Blueprint' }}
-      <span>{{ 'Todo App' }}</span>
+      <a
+        class="form-link"
+        href="https://noop.dev"
+        target="_blank"
+      >
+        <img
+          alt="Noop"
+          src="./assets/logo.svg"
+        >
+      </a>
+      <span>{{ 'Todo Sample Application' }}</span>
     </h1>
   </header>
-  <template v-if="false">
+  <template v-if="todos.length">
     <hr class="divider">
     <section class="todo-list">
-      <!-- Foo -->
+      <div
+        v-for="{ description, images, id, completed } in todos"
+        :key="id"
+        class="todo-item"
+      >
+        {{ completed }}
+        {{ description }}
+        <div
+          v-if="images.length"
+          class="image-preview-grid"
+        >
+          <span
+            v-for="key in images"
+            :key="key"
+            class="image-preview-item"
+          >
+            <img :src="`/api/images/${key}`">
+            <button
+              type="button"
+              class="form-button image-preview-button"
+              title="Enlarge Image"
+              @click.prevent="enlargedImage = key"
+            />
+          </span>
+        </div>
+      </div>
     </section>
   </template>
   <hr class="divider">
   <section class="todo-create">
     <div>
-      <button @click="showModal = true">
+      <button
+        class="form-button"
+        @click="showCreateForm = true"
+      >
         {{ 'New Todo' }}
       </button>
     </div>
   </section>
   <section
-    v-if="showModal"
+    v-if="enlargedImage || showCreateForm"
     class="todo-modal"
-    @click="showModal = false"
+    @click="closeModal"
   >
+    <div
+      v-if="enlargedImage"
+      class="enlarged-image"
+      @click.stop
+    >
+      <img :src="`/api/images/${enlargedImage}`">
+    </div>
     <form
+      v-if="showCreateForm"
       class="todo-form"
       @submit.prevent="handleSubmit"
       @click.stop
@@ -89,10 +171,10 @@ const handleSubmit = async () => {
       <div class="todo-form-row">
         <h5 class="todo-form-header">
           <button
-            class="todo-close"
+            class="form-button todo-close"
             title="Close modal"
             type="button"
-            @click="showModal = false"
+            @click="closeModal"
           >
             {{ '×' }}
           </button>
@@ -105,25 +187,51 @@ const handleSubmit = async () => {
         <input
           id="form-description"
           v-model="formDesciption"
+          class="form-input"
           type="text"
           autocomplete="off"
           placeholder="What needs to be done?"
         >
-        <label v-if="invalidDesciption" class="form-error">Todo description is required</label>
+        <label
+          v-if="invalidDesciption"
+          class="form-error"
+        >Todo description is required</label>
       </div>
       <div class="todo-form-row">
-        <label for="form-attachment">Attachments (optional, PNG or JPG)</label>
+        <label for="form-file">Attach Images (optional)</label>
         <input
-          id="form-attachment"
-          ref="attachmentInput"
+          id="form-file"
+          ref="imageInput"
+          class="form-input"
           type="file"
-          accept=".jpg, .jpeg, .png"
-          @input="assignAttachment"
+          multiple
+          accept="image/*"
+          @input="assignImages"
         >
-        <div class="form-preview-grid">
-          <span v-for="({ src, key }, idx) in formAttachments" :key="key" class="form-preview-image">
+        <label
+          v-if="invalidImageCount"
+          class="form-error"
+        >Maximum of 6 images can be attached</label>
+        <label
+          v-if="invalidImageSize"
+          class="form-error"
+        >Images must be under 1MB</label>
+        <div
+          v-if="formImages.length"
+          class="image-preview-grid"
+        >
+          <span
+            v-for="({ src, key }, idx) in formImages"
+            :key="key"
+            class="image-preview-item"
+          >
             <img :src="src">
-            <button type="button" class="form-preview-remove" title="Remove Attachment" @click.prevent="removeAttachment(idx)">
+            <button
+              type="button"
+              class="form-button image-preview-button"
+              title="Remove Image"
+              @click.prevent="removeImage(idx)"
+            >
               <span>
                 {{ '×' }}
               </span>
@@ -133,11 +241,13 @@ const handleSubmit = async () => {
       </div>
       <hr class="divider">
       <div class="todo-form-row">
-        <input
+        <button
           id="form-submit"
+          class="form-button"
           type="submit"
-          value="Create Todo"
         >
+          {{ 'Create Todo' }}
+        </button>
       </div>
     </form>
   </section>
@@ -149,6 +259,11 @@ const handleSubmit = async () => {
 :root {
   --noop-primary-color: #0091ff;
   --noop-bg-color: #f4f3ef;
+  --noop-dark-color: #212120;
+}
+
+body {
+  background-color: var(--noop-dark-color);
 }
 
 #app {
@@ -163,8 +278,12 @@ const handleSubmit = async () => {
 
 .todo-header, .todo-list, .todo-create {
   padding: 1rem;
-  max-width: 640px;
   margin: auto;
+}
+
+.todo-list {
+  max-width: 640px;
+  flex-grow: 1;
 }
 
 .todo-create div {
@@ -180,32 +299,86 @@ const handleSubmit = async () => {
   border: var(--noop-primary-color) solid;
 }
 
+.todo-header {
+  background-color: var(--noop-dark-color);
+}
+
 .todo-header h1 {
   text-align: center;
-  color: var(--noop-primary-color);
+  color: var(--bs-white);
   margin-bottom: 0;
-  font-weight: 300;
-  filter: brightness(80%);
+  font-weight: 200;
+  letter-spacing: 0.0125em
+}
+
+.todo-header h1 a {
+  float: right;
+  display: flex;
+}
+
+.todo-header h1 a img {
+  height: 1.2em;
+  width: 1.2em;
 }
 
 .todo-header h1 span {
-  /* font-size: 0.75em; */
-  font-family: 'Brush Script MT', cursive;
-  /* letter-spacing: 1px; */
+  padding: 0 0.25rem 0 calc(1.2em + 0.25rem);
+}
+
+.todo-list .todo-item {
+  background-color: #fff;
+  padding: 1rem;
+  border: var(--bs-gray-400) solid 1px;
+  display: flex;
+  flex-direction: column;
+}
+
+.todo-list .todo-item .image-preview-button {
+  cursor: zoom-in;
+}
+
+.todo-list .todo-item:first-child {
+  border-top-left-radius: 0.25rem;
+  border-top-right-radius: 0.25rem;
+}
+
+.todo-list .todo-item:last-child {
+  border-bottom-left-radius: 0.25rem;
+  border-bottom-right-radius: 0.25rem;
+}
+
+.todo-list .todo-item:not(:last-child) {
+  border-bottom: none;
 }
 
 .todo-modal {
-  position: absolute;
+  position: fixed;
   padding: 1rem;
   top: 0;
-  bottom: 0;
   left: 0;
-  right: 0;
+  width: 100vw;
+  height: 100vh;
   background-color: rgb(0 0 0 / 50%);
   display: flex;
-  overflow-x: hidden;
+  overflow: hidden;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+}
+
+.enlarged-image {
+  border: var(--bs-gray-400) solid;
+  border-radius: 0.25rem;
+  position: relative;
+  max-height: calc(100vh - 2rem);
+  max-width: calc(100vw - 2rem);
+}
+
+.enlarged-image img {
+  max-height: 100%;
+  max-width: 100%;
+  border-radius: 0.125rem;
+  object-fit: contain;
 }
 
 .todo-form {
@@ -242,6 +415,7 @@ const handleSubmit = async () => {
   cursor: pointer;
   border: none;
   background: none;
+  user-select: none;
 }
 
 .todo-form-row {
@@ -251,9 +425,9 @@ const handleSubmit = async () => {
 }
 
 #form-description,
-#form-attachment,
+#form-file,
 #form-submit,
-#form-attachment::file-selector-button {
+#form-file::file-selector-button {
   font-size: 0.875rem;
 }
 
@@ -272,59 +446,63 @@ const handleSubmit = async () => {
   border-radius: 0.25rem;
 }
 
-input:focus,
-input:focus-visible,
-button:focus {
+input.form-input:focus,
+input.form-input:focus-visible,
+button:focus,
+a.form-link:focus {
   outline: 0;
   box-shadow: 0 0 0 0.25rem #0091ff40;
   border-radius: 0.25rem;
 }
 
-input {
+input.form-input {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-input::placeholder {
+input.form-input::placeholder {
   font-style: italic;
 }
 
-#form-attachment {
+#form-file {
   color: transparent;
   user-select: none;
 }
 
-#form-attachment::file-selector-button {
+#form-file::file-selector-button {
   margin-right: 0.5rem;
 }
 
-.form-preview-grid {
+.image-preview-grid {
   display: flex;
-  flex-direction: row;
   flex-wrap: wrap;
-  overflow: hidden;
   gap: 0.5rem;
 }
 
-.form-preview-image {
-  width: max(25%, 8rem);
+.image-preview-item {
   border: var(--bs-gray-400) solid;
   border-radius: 0.25rem;
+  min-width: 6rem;
   height: 8rem;
   flex-grow: 1;
-  overflow: hidden;
   position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
-.form-preview-image img {
+.image-preview-item img {
   max-height: 100%;
   min-width: 100%;
+  flex: 1;
+  border-radius: 0.125rem;
   object-fit: cover;
-  object-position: center;
 }
 
-.form-preview-remove {
+.image-preview-button {
   opacity: 0;
   background-color: rgb(0 0 0 / 50%);
   position: absolute;
@@ -336,20 +514,23 @@ input::placeholder {
   align-items: center;
   justify-content: center;
   border: none;
+  padding: 0;
+  border-radius: 0.125rem;
 }
 
-.form-preview-remove:hover,
-.form-preview-remove:focus {
+.image-preview-button:hover,
+.image-preview-button:focus {
   opacity: 1;
   cursor: pointer;
 }
 
-.form-preview-remove span {
+.image-preview-button span {
   color: var(--bs-danger);
   font-size: 4rem;
+  user-select: none;
 }
 
-#form-attachment::file-selector-button {
+#form-file::file-selector-button {
   background-color: var(--bs-secondary);
   border: var(--bs-secondary) solid;
 }
@@ -359,7 +540,7 @@ input::placeholder {
   border: var(--noop-primary-color) solid;
 }
 
-#form-attachment::file-selector-button,
+#form-file::file-selector-button,
 #form-submit  {
   color: #fff;
   border-radius: 0.25rem;
@@ -370,23 +551,25 @@ input::placeholder {
   margin-left: auto;
 }
 
-input[type="file"] {
+input.form-input[type="file"] {
   font-size: 1rem;
 }
 
-input::file-selector-button {
+input.form-input::file-selector-button {
   font-size: 1rem;
 }
 
-input::file-selector-button:hover,
-input::file-selector-button:focus,
-input[type="file"]:focus-visible,
-input[type="button"]:hover,
-input[type="button"]:focus,
-input[type="submit"]:hover,
-input[type="submit"]:focus,
-button:hover,
-button:focus {
+button.form-button {
+  user-select: none;
+}
+
+input.form-input::file-selector-button:hover,
+input.form-input::file-selector-button:focus,
+input.form-input[type="file"]:focus-visible,
+button.form-button:hover,
+button.form-button:focus,
+a.form-link:hover,
+a.form-link:focus {
   filter: brightness(90%);
   cursor: pointer;
 }
