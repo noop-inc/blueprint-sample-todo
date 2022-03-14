@@ -7,15 +7,6 @@ import cors from 'cors'
 import { scanTable, getItem, putItem, deleteItem } from './dynamodb.js'
 import { getObject, uploadObject, deleteObject } from './s3.js'
 
-// const exampleTo = {
-//   id: 'unique id',
-//   created: Date.now(),
-//   description: 'foo bar',
-//   images: [],
-//   completed: true || false,
-//   deleted: true || false
-// }
-
 const app = express()
 app.use(cors())
 app.use(express.json())
@@ -35,13 +26,7 @@ app.get('/favicon.ico', (req, res) => {
   res.status(204).end()
 })
 
-// all todos
-app.get('/api/todos', async (req, res) => {
-  const items = await scanTable()
-  res.json(items)
-})
-
-// images
+// get image
 app.get('/api/images/:imageId', async (req, res) => {
   const params = req.params
   const imageId = params.imageId
@@ -51,7 +36,14 @@ app.get('/api/images/:imageId', async (req, res) => {
   stream.pipe(res)
 })
 
-// new todo
+// get all todos
+app.get('/api/todos', async (req, res) => {
+  const items = await scanTable()
+  res.json(items)
+})
+
+
+// create new todo
 app.post('/api/todos', uploader, async (req, res) => {
   const files = req?.files || []
   const images = await Promise.all(
