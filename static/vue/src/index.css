@@ -7,11 +7,10 @@
 }
 
 body {
-  background-color: var(--noop-dark-color);
+  background-color: var(--noop-bg-color);
 }
 
 #app {
-  min-height: 100vh;
   background-color: var(--noop-bg-color);
 }
 
