@@ -1,5 +1,11 @@
 <script setup>
 import { ref, unref, watch, onMounted } from 'vue'
+import {
+  fetchAllTodos,
+  createTodo,
+  updateTodo,
+  deleteTodo
+} from './api.js'
 
 const todos = ref([])
 const showCreateForm = ref(false)
@@ -10,6 +16,7 @@ const invalidDesciption = ref(false)
 const invalidImageCount = ref(false)
 const invalidImageSize = ref(false)
 const enlargedImage = ref(null)
+const editId = ref(null)
 
 const assignImages = () => {
   const files = [...unref(imageInput).files]
@@ -58,37 +65,60 @@ watch(formDesciption, () => {
   if (unref(invalidDesciption)) invalidDesciption.value = false
 })
 
+const editToggle = id => {
+  const currentTodo = unref(todos).find(todo => todo.id === id)
+  const input = window.document.getElementById(`edit-description-${id}`)
+  input.value = currentTodo.description
+  editId.value = id
+  window.setTimeout(() => {
+    input.focus()
+  }, 0)
+}
+
+const handleFetchAllTodos = async () => {
+  const allTodo = await fetchAllTodos()
+  todos.value = allTodo.sort((a, b) => a.created - b.created)
+}
+
+const handleUpdateTodo = async item => {
+  const updatedTodo = await updateTodo(item)
+  todos.value = unref(todos).map(todo => todo.id === updatedTodo.id ? updatedTodo : todo)
+}
+
+const handleDeleteTodo = async id => {
+  const deletedTodo = await deleteTodo(id)
+  todos.value = unref(todos).filter(todo => todo.id !== deletedTodo.id)
+}
+
 const handleSubmit = async () => {
-  if (!unref(formDesciption)) {
+  if (!unref(formDesciption).trim()) {
     invalidDesciption.value = true
   } else {
     const formData = new FormData()
-    formData.append('description', unref(formDesciption))
+    formData.append('description', unref(formDesciption).trim())
     unref(formImages).forEach(({ file }) => {
       formData.append('images', file)
     })
-
-    const res = await fetch(
-      '/api/todos',
-      {
-        method: 'POST',
-        body: formData
-      }
-    )
-    const data = await res.json()
-    todos.value = [...unref(todos), data]
+    const newTodo = await createTodo(formData)
+    todos.value = [...unref(todos), newTodo]
     showCreateForm.value = false
   }
 }
 
-const getAllTodos = async () => {
-  const res = await fetch('/api/todos')
-  const data = await res.json()
-  todos.value = data.sort((a, b) => a.created - b.created)
+const handleEdit = async () => {
+  const currentTodo = unref(todos).find(todo => todo.id === unref(editId))
+  const input = window.document.getElementById(`edit-description-${currentTodo.id}`)
+  const value = input.value.trim()
+  if (value) {
+    if (value !== currentTodo.description) {
+      await handleUpdateTodo({ id: currentTodo.id, description: value })
+    }
+    editId.value = null
+  }
 }
 
-onMounted(() => {
-  getAllTodos()
+onMounted(async () => {
+  await handleFetchAllTodos()
 })
 </script>
 
@@ -105,7 +135,13 @@ onMounted(() => {
           src="./assets/logo.svg"
         >
       </a>
-      <span>{{ 'Todo Sample Application' }}</span>
+      <span>{{ 'Todo Application' }}</span>
+      <button
+        class="form-button"
+        @click="showCreateForm = true"
+      >
+        {{ 'New Todo' }}
+      </button>
     </h1>
   </header>
   <template v-if="todos.length">
@@ -116,10 +152,50 @@ onMounted(() => {
         :key="id"
         class="todo-item"
       >
-        {{ completed }}
-        {{ description }}
+        <div class="todo-description">
+          <button
+            type="button"
+            :class="['form-button todo-complete', { completed }]"
+            title="Complete"
+            @click.prevent="handleUpdateTodo({ id, completed: !completed })"
+          >
+            <span>{{ '✓' }}</span>
+          </button>
+          <button
+            type="button"
+            class="form-button todo-delete"
+            title="Delete"
+            @click.prevent="handleDeleteTodo(id)"
+          >
+            <span>{{ '×' }}</span>
+          </button>
+          <div
+            :class="{ completed }"
+            @dblclick.prevent.stop="editToggle(id)"
+          >
+            <form
+              :class="['edit-form', { 'display-none': editId !== id }]"
+              @submit.prevent="handleEdit"
+              @click.stop
+            >
+              <input
+                :id="`edit-description-${id}`"
+                placeholder="What needs to be done?"
+                class="form-input edit-description"
+                type="text"
+                autocomplete="off"
+                @blur="editId = null"
+              >
+              <input
+                type="submit"
+                class="display-none"
+              >
+            </form>
+            <span :class="{ 'display-none': editId === id }">{{ description }}</span>
+          </div>
+        </div>
         <div
-          v-if="images.length"
+          v-if="images && images.length"
           class="image-preview-grid"
         >
           <span
@@ -140,16 +216,6 @@ onMounted(() => {
     </section>
   </template>
   <hr class="divider">
-  <section class="todo-create">
-    <div>
-      <button
-        class="form-button"
-        @click="showCreateForm = true"
-      >
-        {{ 'New Todo' }}
-      </button>
-    </div>
-  </section>
   <section
     v-if="enlargedImage || showCreateForm"
     class="todo-modal"
@@ -183,7 +249,9 @@ onMounted(() => {
       </div>
       <hr class="divider">
       <div class="todo-form-row">
-        <label for="form-description">Description (required)</label>
+        <label for="form-description">
+          {{ 'Description (required)' }}
+        </label>
         <input
           id="form-description"
           v-model="formDesciption"
@@ -195,10 +263,14 @@ onMounted(() => {
         <label
           v-if="invalidDesciption"
           class="form-error"
-        >Todo description is required</label>
+        >
+          {{ 'Todo description is required' }}
+        </label>
       </div>
       <div class="todo-form-row">
-        <label for="form-file">Attach Images (optional)</label>
+        <label for="form-file">
+          {{ 'Attach Images (optional)' }}
+        </label>
         <input
           id="form-file"
           ref="imageInput"
@@ -211,11 +283,15 @@ onMounted(() => {
         <label
           v-if="invalidImageCount"
           class="form-error"
-        >Maximum of 6 images can be attached</label>
+        >
+          {{ 'Maximum of 6 images can be attached' }}
+        </label>
         <label
           v-if="invalidImageSize"
           class="form-error"
-        >Images must be under 1MB</label>
+        >
+          {{ 'Images must be under 1MB' }}
+        </label>
         <div
           v-if="formImages.length"
           class="image-preview-grid"
@@ -252,325 +328,3 @@ onMounted(() => {
     </form>
   </section>
 </template>
-
-<style>
-@import './reboot.css';
-
-:root {
-  --noop-primary-color: #0091ff;
-  --noop-bg-color: #f4f3ef;
-  --noop-dark-color: #212120;
-}
-
-body {
-  background-color: var(--noop-dark-color);
-}
-
-#app {
-  min-height: 100vh;
-  background-color: var(--noop-bg-color);
-}
-
-.divider {
-  margin: 0 auto;
-  flex-shrink: 0;
-}
-
-.todo-header, .todo-list, .todo-create {
-  padding: 1rem;
-  margin: auto;
-}
-
-.todo-list {
-  max-width: 640px;
-  flex-grow: 1;
-}
-
-.todo-create div {
-  width: min(640, calc(100vw - 2rem));
-  text-align: center;
-}
-
-.todo-create div button {
-  color: #fff;
-  border-radius: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  background-color: var(--noop-primary-color);
-  border: var(--noop-primary-color) solid;
-}
-
-.todo-header {
-  background-color: var(--noop-dark-color);
-}
-
-.todo-header h1 {
-  text-align: center;
-  color: var(--bs-white);
-  margin-bottom: 0;
-  font-weight: 200;
-  letter-spacing: 0.0125em
-}
-
-.todo-header h1 a {
-  float: right;
-  display: flex;
-}
-
-.todo-header h1 a img {
-  height: 1.2em;
-  width: 1.2em;
-}
-
-.todo-header h1 span {
-  padding: 0 0.25rem 0 calc(1.2em + 0.25rem);
-}
-
-.todo-list .todo-item {
-  background-color: #fff;
-  padding: 1rem;
-  border: var(--bs-gray-400) solid 1px;
-  display: flex;
-  flex-direction: column;
-}
-
-.todo-list .todo-item .image-preview-button {
-  cursor: zoom-in;
-}
-
-.todo-list .todo-item:first-child {
-  border-top-left-radius: 0.25rem;
-  border-top-right-radius: 0.25rem;
-}
-
-.todo-list .todo-item:last-child {
-  border-bottom-left-radius: 0.25rem;
-  border-bottom-right-radius: 0.25rem;
-}
-
-.todo-list .todo-item:not(:last-child) {
-  border-bottom: none;
-}
-
-.todo-modal {
-  position: fixed;
-  padding: 1rem;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgb(0 0 0 / 50%);
-  display: flex;
-  overflow: hidden;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.enlarged-image {
-  border: var(--bs-gray-400) solid;
-  border-radius: 0.25rem;
-  position: relative;
-  max-height: calc(100vh - 2rem);
-  max-width: calc(100vw - 2rem);
-}
-
-.enlarged-image img {
-  max-height: 100%;
-  max-width: 100%;
-  border-radius: 0.125rem;
-  object-fit: contain;
-}
-
-.todo-form {
-  padding: 1rem;
-  background-color: #fff;
-  border: var(--bs-gray-400) solid 1px;
-  border-radius: 0.25rem;
-  margin: auto;
-  width: min(480px, calc(100vw - 2rem));
-  max-height: calc(100vh - 2rem);
-  overflow-y: scroll;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.todo-form .divider {
-  margin: 0 -1rem;
-}
-
-.todo-form-header {
-  margin: 0;
-}
-
-.todo-close {
-  float: right;
-  font-size: 1.25rem;
-  color: var(--bs-secondary);
-  display: flex;
-  align-items: center;
-  padding: 0 0.5rem;
-  margin-top: -0.5rem;
-  margin-right: -0.5rem;
-  cursor: pointer;
-  border: none;
-  background: none;
-  user-select: none;
-}
-
-.todo-form-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-#form-description,
-#form-file,
-#form-submit,
-#form-file::file-selector-button {
-  font-size: 0.875rem;
-}
-
-.todo-form label {
-  font-size: 0.75rem;
-  color: var(--bs-dark);
-}
-
-.todo-form .form-error {
-  color: var(--bs-danger);
-}
-
-#form-description {
-  padding: 0.25rem 0.5rem;
-  border: var(--bs-gray-400) solid;
-  border-radius: 0.25rem;
-}
-
-input.form-input:focus,
-input.form-input:focus-visible,
-button:focus,
-a.form-link:focus {
-  outline: 0;
-  box-shadow: 0 0 0 0.25rem #0091ff40;
-  border-radius: 0.25rem;
-}
-
-input.form-input {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-input.form-input::placeholder {
-  font-style: italic;
-}
-
-#form-file {
-  color: transparent;
-  user-select: none;
-}
-
-#form-file::file-selector-button {
-  margin-right: 0.5rem;
-}
-
-.image-preview-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.image-preview-item {
-  border: var(--bs-gray-400) solid;
-  border-radius: 0.25rem;
-  min-width: 6rem;
-  height: 8rem;
-  flex-grow: 1;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.image-preview-item img {
-  max-height: 100%;
-  min-width: 100%;
-  flex: 1;
-  border-radius: 0.125rem;
-  object-fit: cover;
-}
-
-.image-preview-button {
-  opacity: 0;
-  background-color: rgb(0 0 0 / 50%);
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  padding: 0;
-  border-radius: 0.125rem;
-}
-
-.image-preview-button:hover,
-.image-preview-button:focus {
-  opacity: 1;
-  cursor: pointer;
-}
-
-.image-preview-button span {
-  color: var(--bs-danger);
-  font-size: 4rem;
-  user-select: none;
-}
-
-#form-file::file-selector-button {
-  background-color: var(--bs-secondary);
-  border: var(--bs-secondary) solid;
-}
-
-#form-submit {
-  background-color: var(--noop-primary-color);
-  border: var(--noop-primary-color) solid;
-}
-
-#form-file::file-selector-button,
-#form-submit  {
-  color: #fff;
-  border-radius: 0.25rem;
-  padding: 0.25rem 0.5rem;
-}
-
-#form-submit {
-  margin-left: auto;
-}
-
-input.form-input[type="file"] {
-  font-size: 1rem;
-}
-
-input.form-input::file-selector-button {
-  font-size: 1rem;
-}
-
-button.form-button {
-  user-select: none;
-}
-
-input.form-input::file-selector-button:hover,
-input.form-input::file-selector-button:focus,
-input.form-input[type="file"]:focus-visible,
-button.form-button:hover,
-button.form-button:focus,
-a.form-link:hover,
-a.form-link:focus {
-  filter: brightness(90%);
-  cursor: pointer;
-}
-</style>

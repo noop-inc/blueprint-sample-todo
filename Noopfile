@@ -31,6 +31,8 @@ WORKDIR express
 COPY /service/express/package*.json ./
 RUN npm ci
 COPY /service/express/index.js ./
+COPY /service/express/dynamodb.js ./
+COPY /service/express/s3.js ./
 
 EXPOSE 3000
 CMD ["npm", "start"]
