@@ -91,11 +91,11 @@ const handleDeleteTodo = async id => {
 }
 
 const handleSubmit = async () => {
-  if (!unref(formDesciption).trim()) {
+  if (!unref(formDesciption)?.trim()) {
     invalidDesciption.value = true
   } else {
     const formData = new FormData()
-    formData.append('description', unref(formDesciption).trim())
+    formData.append('description', unref(formDesciption)?.trim())
     unref(formImages).forEach(({ file }) => {
       formData.append('images', file)
     })
@@ -108,7 +108,7 @@ const handleSubmit = async () => {
 const handleEdit = async () => {
   const currentTodo = unref(todos).find(todo => todo.id === unref(editId))
   const input = window.document.getElementById(`edit-description-${currentTodo.id}`)
-  const value = input.value.trim()
+  const value = input.value?.trim()
   if (value) {
     if (value !== currentTodo.description) {
       await handleUpdateTodo({ id: currentTodo.id, description: value })
@@ -138,6 +138,7 @@ onMounted(async () => {
       <span>{{ 'Todo Application' }}</span>
       <button
         class="form-button"
+        title="New Todo"
         @click="showCreateForm = true"
       >
         {{ 'New Todo' }}
@@ -145,7 +146,6 @@ onMounted(async () => {
     </h1>
   </header>
   <template v-if="todos.length">
-    <hr class="divider">
     <section class="todo-list">
       <div
         v-for="{ description, images, id, completed } in todos"
@@ -156,7 +156,7 @@ onMounted(async () => {
           <button
             type="button"
             :class="['form-button todo-complete', { completed }]"
-            title="Complete"
+            title="Toggle Complete"
             @click.prevent="handleUpdateTodo({ id, completed: !completed })"
           >
             <span>{{ '✓' }}</span>
@@ -180,7 +180,7 @@ onMounted(async () => {
             >
               <input
                 :id="`edit-description-${id}`"
-                placeholder="What needs to be done?"
+                placeholder="What needs to be completed?"
                 class="form-input edit-description"
                 type="text"
                 autocomplete="off"
@@ -215,7 +215,6 @@ onMounted(async () => {
       </div>
     </section>
   </template>
-  <hr class="divider">
   <section
     v-if="enlargedImage || showCreateForm"
     class="todo-modal"
@@ -258,7 +257,7 @@ onMounted(async () => {
           class="form-input"
           type="text"
           autocomplete="off"
-          placeholder="What needs to be done?"
+          placeholder="What needs to be completed?"
         >
         <label
           v-if="invalidDesciption"
@@ -321,6 +320,7 @@ onMounted(async () => {
           id="form-submit"
           class="form-button"
           type="submit"
+          title="Create Todo"
         >
           {{ 'Create Todo' }}
         </button>

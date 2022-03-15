@@ -42,7 +42,6 @@ app.get('/api/todos', async (req, res) => {
   res.json(items)
 })
 
-
 // create new todo
 app.post('/api/todos', uploader, async (req, res) => {
   const files = req?.files || []

@@ -7,16 +7,13 @@
 }
 
 body {
-  background-color: var(--noop-bg-color);
+  background-color: var(--noop-dark-color);
 }
 
 #app {
   background-color: var(--noop-bg-color);
-}
-
-.divider {
-  margin: 0 auto;
-  flex-shrink: 0;
+  min-height: 100dvh;
+  min-height: 100vh;
 }
 
 .todo-header, .todo-list{
@@ -77,40 +74,47 @@ body {
   gap: 0.5rem;
 }
 
-.todo-list .todo-item .todo-complete,
-.todo-list .todo-item .todo-delete {
+.todo-list .todo-item button {
   padding: 0;
-  background-color: #fff;
+  background-color: transparent;
   border-radius: 50%;
   display: flex;
   height: 1.5rem;
   width: 1.5rem;
   justify-content: center;
   align-items: center;
-}
-
-.todo-list .todo-item button {
-  color: transparent;
-  border: var(--bs-gray-400) solid 1px;
+  line-height: 1;
 }
 
 .todo-list .todo-item .todo-complete {
   margin-right: 0.75rem;
   float: left;
+  color: transparent;
+  border: var(--bs-gray-400) solid 1px;
 }
 
 .todo-list .todo-item .todo-complete.completed {
   color: var(--bs-success);
 }
 
+.todo-list .todo-item .todo-complete:hover,
+.todo-list .todo-item .todo-complete:focus {
+  box-shadow: 0 0 0 0.25rem #19875440;
+}
+
 .todo-list .todo-item .todo-delete {
+  font-size: 1.25rem;
   margin-left: 0.75rem;
   float: right;
+  color: var(--bs-gray-400);
+  border: transparent solid 1px;
 }
 
 .todo-list .todo-item .todo-delete:hover,
 .todo-list .todo-item .todo-delete:focus {
   color: var(--bs-danger);
+  border: var(--bs-gray-400) solid 1px;
+  box-shadow: 0 0 0 0.25rem #dc354540;
 }
 
 .todo-list .todo-item .todo-description  {
@@ -195,6 +199,7 @@ body {
 
 .todo-form .divider {
   margin: 0 -1rem;
+  flex-shrink: 0;
 }
 
 .todo-form-header {
