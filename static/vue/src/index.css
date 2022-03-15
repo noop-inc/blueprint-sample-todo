@@ -74,7 +74,11 @@ body {
   gap: 0.5rem;
 }
 
-.todo-list .todo-item button {
+.todo-list .todo-item .todo-description  {
+  position: relative;
+}
+
+.todo-list .todo-description button {
   padding: 0;
   background-color: transparent;
   border-radius: 50%;
@@ -86,23 +90,23 @@ body {
   line-height: 1;
 }
 
-.todo-list .todo-item .todo-complete {
+.todo-list .todo-description .todo-complete {
   margin-right: 0.75rem;
   float: left;
   color: transparent;
   border: var(--bs-gray-400) solid 1px;
 }
 
-.todo-list .todo-item .todo-complete.completed {
+.todo-list .todo-description .todo-complete.completed {
   color: var(--bs-success);
 }
 
-.todo-list .todo-item .todo-complete:hover,
-.todo-list .todo-item .todo-complete:focus {
+.todo-list .todo-description .todo-complete:hover,
+.todo-list .todo-description .todo-complete:focus {
   box-shadow: 0 0 0 0.25rem #19875440;
 }
 
-.todo-list .todo-item .todo-delete {
+.todo-list .todo-description .todo-delete {
   font-size: 1.25rem;
   margin-left: 0.75rem;
   float: right;
@@ -110,15 +114,11 @@ body {
   border: transparent solid 1px;
 }
 
-.todo-list .todo-item .todo-delete:hover,
-.todo-list .todo-item .todo-delete:focus {
+.todo-list .todo-description .todo-delete:hover,
+.todo-list .todo-description .todo-delete:focus {
   color: var(--bs-danger);
   border: var(--bs-gray-400) solid 1px;
   box-shadow: 0 0 0 0.25rem #dc354540;
-}
-
-.todo-list .todo-item .todo-description  {
-  position: relative;
 }
 
 .todo-list .todo-item .todo-description div.completed {
