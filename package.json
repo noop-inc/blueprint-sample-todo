@@ -1,5 +1,5 @@
 {
-  "name": "blueprint",
+  "name": "todo-sample-app-components",
   "version": "0.0.0",
   "description": "",
   "engines": {
@@ -14,16 +14,7 @@
     "lint-eslint": "eslint . --ext .js,.vue --cache --cache-location node_modules/.cache/.eslintcache --ignore-path .gitignore",
     "lint-prettier": "prettier \"**/*.{htm,html,json,md,markdown,yml,yaml}\" --check --ignore-path .gitignore"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/noop-inc/blueprint.git"
-  },
-  "author": "Derek Wolpert",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/noop-inc/blueprint/issues"
-  },
-  "homepage": "https://github.com/noop-inc/blueprint#readme",
+  "author": "Noop Inc <hello@noop.dev>",
   "devDependencies": {
     "concurrently": "^7.0.0",
     "eslint": "^8.11.0",
