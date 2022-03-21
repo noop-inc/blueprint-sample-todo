@@ -9,9 +9,13 @@ export const fetchTodo = async id => {
 }
 
 export const createTodo = async item => {
+  const formData = new FormData()
+  item.forEach(([key, value]) => {
+    formData.append(key, value)
+  })
   const res = await window.fetch(
     '/api/todos/',
-    { method: 'POST', body: item }
+    { method: 'POST', body: formData }
   )
   return await res.json()
 }

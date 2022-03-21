@@ -51,6 +51,10 @@ const closeModal = () => {
   enlargedImage.value = null
 }
 
+document.addEventListener('keyup', (e) => {
+  if (e.key === 'Escape') closeModal()
+})
+
 watch(showCreateForm, clearForm)
 
 watch([showCreateForm, enlargedImage], () => {
@@ -94,12 +98,13 @@ const handleSubmit = async () => {
   if (!unref(formDesciption)?.trim()) {
     invalidDesciption.value = true
   } else {
-    const formData = new FormData()
-    formData.append('description', unref(formDesciption)?.trim())
-    unref(formImages).forEach(({ file }) => {
-      formData.append('images', file)
-    })
-    const newTodo = await createTodo(formData)
+    const item = [
+      ['description', unref(formDesciption)?.trim()],
+      ...unref(formImages).map(({ file }) =>
+        ['image', file]
+      )
+    ]
+    const newTodo = await createTodo(item)
     todos.value = [...unref(todos), newTodo]
     showCreateForm.value = false
   }
@@ -268,7 +273,7 @@ onMounted(async () => {
       </div>
       <div class="todo-form-row">
         <label for="form-file">
-          {{ 'Attach Images (optional)' }}
+          {{ 'Attach up to 6 images, 1MB max each (optional)' }}
         </label>
         <input
           id="form-file"

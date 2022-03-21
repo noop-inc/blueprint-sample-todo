@@ -20,7 +20,7 @@ const upload = multer({
     files: 6
   }
 })
-const uploader = upload.array('images', 6)
+const uploader = upload.array('image', 6)
 
 app.get('/favicon.ico', (req, res) => {
   res.status(204).end()
