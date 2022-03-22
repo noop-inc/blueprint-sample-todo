@@ -16,7 +16,7 @@ dynamodb = boto3.resource('dynamodb',
     region_name=AWS_REGION
 )
 
-def randomid(length = 24):
+def randomid(length: int = 24) -> dict:
     """randomid
 
     Args:
@@ -32,7 +32,7 @@ def randomid(length = 24):
         "id": generated,
         #"timestamp": timestamp
     }
-def scan_table():
+def scan_table() -> list:
     """scan_table
 
     Returns:
@@ -45,7 +45,7 @@ def scan_table():
         return data
     except:
         print('A scanning error occurred')
-def get_item(item_id):
+def get_item(item_id: str = None) -> dict:
     """get_item
 
     Args:
@@ -65,15 +65,19 @@ def get_item(item_id):
         return item
     except:
         print(f"An error occurred getting item with id ${id}")
-def put_item(item):
+def put_item(item: dict = None) -> dict:
     """put_item
 
     Args:
         item (dict): a python dictionary representing JSON inputs
 
-        - title - title of todo
         - description - description of todo
-        - complete - status of todo
+
+        - body - body of todo
+
+        - file - file attached to todo
+
+        - completed - status of todo
 
     Returns:
         dict: if successful, returns dict containing inserted attribs, if not, returns responses metadata
@@ -86,23 +90,37 @@ def put_item(item):
     response = table.update_item(
         Key={"id": item['id']},
         UpdateExpression=
-        f"set title=:title, description=:description, complete=:complete",
+        f"set description=:description, body=:body, file=:file, completed=:completed",
         ExpressionAttributeValues={
-            ':title': str(item.get('title', 'Example todo')),
-            ':description': str(item.get('description',
-                                         'example description')),
-            ':complete': bool(item.get('complete', False))
+            ':description':
+            str(item.get('description', 'Example description')),
+            ':body':
+            str(item.get('body', 'Example ToDo')),
+            ':file':
+            str(item.get('file', '')),
+            ':completed':
+            bool(item.get('completde', False))
         },
         ReturnValues="ALL_NEW")
     if response['ResponseMetadata']['HTTPStatusCode'] == 200:
         return response['Attributes']
     else:
         return {**response['ResponseMetadata']}
-def update_item(item):
+def update_item(item: dict = None) -> dict:
     """update_item
 
     Args:
         item (dict): a dictionary with the properties to update, must include `id`
+
+        valid params
+
+        - description - description of todo
+
+        - body - body of todo
+
+        - file - file attached to todo
+
+        - completed - status of todo
 
     Returns:
         dict: updated attributes or response metadata
@@ -116,25 +134,27 @@ def update_item(item):
             'id': item.get('id')
         }
     )
-    print(defaults)
+    # print(defaults)
     response = table.update_item(
         Key={'id': item['id']},
         UpdateExpression=
-        f"set title=:title, description=:description, complete=:complete",
+        f"set description=:description, body=:body, file=:file, completed=:completed",
         ExpressionAttributeValues={
-            ':title':
-            str(item.get('title', defaults['title'])),
             ':description':
             str(item.get('description', defaults['description'])),
-            ':complete':
-            bool(item.get('complete', defaults['complete']))
+            ':body':
+            str(item.get('body', defaults['body'])),
+            ':file':
+            str(item.get('file', defaults['file'])),
+            ':completed':
+            bool(item.get('completed', defaults['completed']))
         },
         ReturnValues="ALL_NEW")
     if response['ResponseMetadata']['HTTPStatusCode'] == 200:
         return response['Attributes']
     else:
         return {**response['ResponseMetadata']}
-def delete_item(item_id):
+def delete_item(item_id: str = None) -> dict:
     """delete_item
 
     Args:

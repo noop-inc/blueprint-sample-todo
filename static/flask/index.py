@@ -23,24 +23,25 @@ Bootstrap(app)
 cors = CORS(app)
 
 class ToDoForm(FlaskForm):
-    title = StringField('Title', validators=[DataRequired()])
-    description = TextAreaField('Description', validators=[DataRequired()])
-    # media = FileField('Media', validators=[regexp(u'^[^/\\]\.jpg$')])
-    complete = BooleanField('Complete', default=False,)
+    description = StringField('Description', validators=[DataRequired()])
+    body = TextAreaField('Body', validators=[DataRequired()])
+    file = FileField('Media', validators=[regexp(u'^[^/\\]\.jpg$')])
+    completed = BooleanField('Completed', default=False,)
     submit = SubmitField('submit')
 
-@app.route('/todo/home', methods=['GET', 'POST'])
+@app.route('/home', methods=['GET', 'POST'])
 @cross_origin()
 def index():
-    todos = requests.get(f"{API_URL}/item")
+    todos = requests.get(f"{API_URL}/todos")
     form = ToDoForm()
     if form.validate_on_submit():
         body = {
-            'title': form.title.data,
             'description': form.description.data,
-            'complete': form.complete.data
+            'body': form.body.data,
+            'file': form.file.data,
+            'completed': form.completed.data
         }
-        print(body)
+        # print(body)
 
         result = requests.post(
             f"{API_URL}/item",
@@ -48,22 +49,21 @@ def index():
             headers={
                 'Content-Type': 'application/json'
             }
-
         )
-        todos = requests.get(f"{API_URL}/item")
+        todos = requests.get(f"{API_URL}/todos")
 
-        print(result.json())
+        # print(result.json())
         return redirect(url_for('index'))
         # return render_template('index.html', form=form, data=todos.json())
 
     return render_template('index.html', form=form, data=todos.json())
 
-@app.route('/todo/delete', methods=['DELETE'])
+@app.route('/delete', methods=['DELETE'])
 @cross_origin()
 def delete():
     return jsonify({'foo': 'bar'})
 
-@app.route('/todo/update', methods=['PUT'])
+@app.route('/update', methods=['PUT'])
 @cross_origin()
 def update():
     return jsonify({'foo': 'bar'})

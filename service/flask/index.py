@@ -11,52 +11,54 @@ defaults = {
     "name": "backend",
     "purpose": "CRUD methods for ToDo example application"
 }
-@app.route('/')
+@app.route('/api/_health')
 @cross_origin()
 def home():
     return jsonify(**defaults)
 
-@app.route('/api/item', methods=['GET'])
+# get all todos
+
+@app.route('/api/todos', methods=['GET'])
 @cross_origin()
 def list():
     result = scan_table()
     return jsonify((result))
 
-@app.route('/api/item', methods=['POST'])
+# create new todo
+
+@app.route('/api/todos', methods=['POST'])
 @cross_origin()
 def create():
     # error = None
     params = request.json
-    print(params)
     result = put_item(params)
     return jsonify(result)
 
-@app.route('/api/item/<item_id>', methods=['DELETE'])
-@cross_origin()
-def delete(item_id):
-    result = delete_item(item_id)
-    return jsonify(result)
+# get todo
 
-
-@app.route('/api/item/<item_id>', methods=['GET'])
+@app.route('/api/todos/<todo_id>', methods=['GET'])
 @cross_origin()
-def get(item_id = None):
-    if item_id:
-        item_id = {
-            "id": item_id
-        }
-        result = get_item(item_id)
+def get(todo_id=None):
+    if todo_id:
+        todo_id = {"id": todo_id}
+        result = get_item(todo_id)
         return jsonify(result)
     return jsonify({})
 
-@app.route('/api/item/<item_id>', methods=['PUT'])
+# update todo
+@app.route('/api/todos/<todo_id>', methods=['PUT'])
 @cross_origin()
-def update(item_id = None):
-    if item_id:
-        params = {
-            **request.json,
-            "id": item_id
-        }
+def update(todo_id=None):
+    if todo_id:
+        params = {**request.json, "id": todo_id}
         result = update_item(params)
         return jsonify(result)
     return jsonify({})
+
+# delete todo
+
+@app.route('/api/todos/<todo_id>', methods=['DELETE'])
+@cross_origin()
+def delete(todo_id):
+    result = delete_item(todo_id)
+    return jsonify(result)
