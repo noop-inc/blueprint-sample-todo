@@ -1,5 +1,5 @@
 <script setup>
-import { ref, unref, watch, onMounted } from 'vue'
+import { ref, unref, watch, onMounted, onBeforeUnmount } from 'vue'
 import {
   fetchAllTodos,
   createTodo,
@@ -51,17 +51,15 @@ const closeModal = () => {
   enlargedImage.value = null
 }
 
-document.addEventListener('keyup', (e) => {
-  if (e.key === 'Escape') closeModal()
-})
-
 watch(createForm, clearForm)
 
 watch([createForm, enlargedImage], () => {
-  if (unref(createForm) || unref(enlargedImage)) {
-    window.document.body.style.overflow = 'hidden'
-  } else {
-    window.document.body.style.overflow = null
+  const overflowStyle =
+    (unref(createForm) || unref(enlargedImage))
+      ? 'hidden'
+      : null
+  if (window.document.body.style.overflow !== overflowStyle) {
+    window.document.body.style.overflow = overflowStyle
   }
 })
 
@@ -123,8 +121,17 @@ const handleEdit = async () => {
   }
 }
 
+const handleEscape = (e) => {
+  if (e.key === 'Escape') closeModal()
+}
+
 onMounted(async () => {
   await handleFetchAllTodos()
+  window.document.addEventListener('keyup', handleEscape)
+})
+
+onBeforeUnmount(() => {
+  window.document.removeEventListener('keyup', handleEscape)
 })
 </script>
 
