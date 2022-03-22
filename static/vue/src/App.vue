@@ -121,7 +121,7 @@ const handleEdit = async () => {
   }
 }
 
-const handleEscape = (e) => {
+const handleEscape = e => {
   if (e.key === 'Escape') closeModal()
 }
 
