@@ -8,10 +8,11 @@ export const fetchTodo = async id => {
   return await res.json()
 }
 
-export const createTodo = async item => {
+export const createTodo = async (description, images) => {
   const formData = new FormData()
-  item.forEach(([key, value]) => {
-    formData.append(key, value)
+  formData.append('description', description)
+  images.forEach(({ file }) => {
+    formData.append('image', file)
   })
   const res = await window.fetch(
     '/api/todos/',
