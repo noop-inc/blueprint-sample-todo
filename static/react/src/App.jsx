@@ -163,7 +163,6 @@ export default () => {
       {
         todos.length
           ? (
-
             <section className='todo-list'>
               {
                 todos.map(({ description, images, id, completed }) =>
