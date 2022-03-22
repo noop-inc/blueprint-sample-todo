@@ -54,10 +54,6 @@ export default () => {
     setEnlargedImage(false)
   }
 
-  document.addEventListener('keyup', (e) => {
-    if (e.key === 'Escape') closeModal()
-  })
-
   const handleCreateForm = state => {
     setCreateForm(state)
     clearForm()
@@ -122,17 +118,34 @@ export default () => {
     }
   }
 
-  useEffect(async () => {
+  useEffect(() => {
     if (!mounted) {
-      await handleFetchAllTodos()
+      (async () => {
+        await handleFetchAllTodos()
+      })()
       setMounted(true)
     }
-    window.document.body.style.overflow =
+
+    const overflowStyle =
       (createForm || enlargedImage)
         ? 'hidden'
         : null
+    if (window.document.body.style.overflow !== overflowStyle) {
+      window.document.body.style.overflow = overflowStyle
+    }
+
     if (invalidDescription && formDescription) {
       setInvalidDescription(false)
+    }
+
+    const handleEscape = e => {
+      if (e.key === 'Escape') closeModal()
+    }
+
+    window.document.addEventListener('keyup', handleEscape)
+
+    return () => {
+      window.document.removeEventListener('keyup', handleEscape)
     }
   })
 
