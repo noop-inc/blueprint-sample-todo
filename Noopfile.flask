@@ -1,0 +1,39 @@
+
+COMPONENT backend service
+RESOURCE DynamoDBTable dynamodb -s hashKeyName=id -s hashKeyType=S
+RESOURCE S3Bucket s3
+FROM python:3.10-alpine
+ENV FLASK_APP index.py
+ENV FLASK_RUN_PORT 8000
+ENV FLASK_ENV development
+ENV DYNAMODB_TABLE $.resources.DynamoDBTable.tableName
+ENV DYNAMODB_ENDPOINT $.resources.DynamoDBTable.endpoint
+ENV S3_BUCKET $.resources.S3Bucket.bucket
+ENV S3_ENDPOINT $.resources.S3Bucket.endpoint
+ROUTE /api/*
+
+WORKDIR /backend
+COPY /service/flask/index.py ./
+COPY /service/flask/requirements.txt ./
+COPY /service/flask/dynamodb.py ./
+COPY /service/flask/s3.py ./
+RUN python -m pip install -r requirements.txt
+CMD ["flask", "run", "--host", "0.0.0.0", "--port", "8000"]
+
+EXPOSE 8000
+
+COMPONENT todo service
+FROM python:3.10-alpine
+ENV FLASK_APP index.py
+ENV FLASK_RUN_PORT 9000
+ENV FLASK_ENV development
+ROUTE /todo/*
+WORKDIR /todo
+COPY /static/flask/requirements.txt ./
+COPY /static/flask/index.py ./
+# COPY /static/flask/lib ./lib
+COPY /static/flask/static ./static
+COPY /static/flask/templates ./templates
+RUN python -m pip install -r requirements.txt
+CMD ["flask", "run", "--host", "0.0.0.0", "--port", "9000"]
+EXPOSE 9000
