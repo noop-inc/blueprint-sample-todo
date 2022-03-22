@@ -1,0 +1,103 @@
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% block scripts %}
+<script src="{{url_for('.static', filename='common.js')}}"></script>
+{{super()}}
+{% endblock %}
+{% block title %}Sample To Do Application{% endblock %}
+
+{% block navbar %}
+<div class="navbar navbar-fixed-top">
+  <!-- ... -->
+</div>
+{% endblock %}
+
+{% block content %}
+  <nav class="navbar navbar-light bg-light">
+    <span class="navbar-brand mb-0 h1">ToDo</span>
+  </nav>
+
+  <div class="container">
+    <div class="row">
+      <form class="form form-vertical" method="POST" action="" role="form">
+        {{form.hidden_tag()}}
+
+        <div class="form-group">
+          {% if form.title.errors %}
+            {{form.title(class="form-control is-invalid")}}
+            {% for error in form.title.errors %}
+              <div class="invalid-feedback">
+                <span> {{ error }} </span>
+              </div>
+            {% endfor %}
+          {% else %}
+            {{ form.title.label()}}
+            {{ form.title(class="form-control form-control-sm")}}
+          {% endif%}
+        </div>
+        <div class="form-group">
+          {% if form.description.errors %}
+            {{form.description(class="form-control is-invalid")}}
+            {% for error in form.description.errors %}
+              <div class="invalid-feedback">
+                <span>{{ error }}</span>
+              </div>
+            {% endfor%}
+          {% else %}
+            {{ form.description.label()}}
+            {{ form.description(class="form-control form-control-sm")}}
+          {% endif %}
+        </div>
+        <div class="form-group">
+          {% if form.complete.errors %}
+            {{form.complete(class="form-control is-invalid")}}
+            {% for error in form.description.errors %}
+              <div class="invalid-feedback">
+                <span>{{ error }}</span>
+              </div>
+            {% endfor %}
+          {% else %}
+            {{ form.complete.label()}}
+            {{ form.complete(class="form-check")}}
+          {% endif %}
+
+        </div>
+        {{ form.submit(class="btn-lg btn-primary m-5")}}
+      </form>
+    </div>
+    <div class="row">
+      {% if data |length > 0 %}
+        {% for todo in data %}
+          <div id="todo-column-{{ todo['id'] }}" class="col-sm-6">
+            <div id="todo-card-{{ todo['id'] }}" class="card">
+              <div id="todo-body-{{ todo['id'] }}" class="card-body">
+                <h5 id="todo-title-{{ todo['id'] }}" class="card-title"> {{ todo['title'] }}
+                  {% if todo['complete'] %}
+                    <span id="todo-badge-{{ todo['id'] }}" class="badge badge-primary">complete</span>
+                  {% else %}
+                    <span id="todo-badge-{{ todo['id'] }}" class="badge badge-secondary">incomplete</span>
+                  {% endif %}
+                </h5>
+                <p id="todo-text-{{ todo['id'] }}" class="card-text">
+                  {{ todo['description'] }}
+                </p>
+                <button onClick='deleteItem("{{todo['id']}}")'>Remove</button>
+                <button onclick='updateItem("{{todo['id']}}")'>Done</button>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+          <div class="jumbotron">
+            <h1 class="display-4">Looks like you haven't created any ToDos</h1>
+            <p class="lead">Use the form above to add new things todo!</p>
+            <hr class="my-4">
+            <p>
+              Just add a title & description, the complete status defaults to false. Update it for any todo item once it's done
+            </p>
+          </div>
+      {% endif %}
+    </div>
+  </div>
+
+{% endblock %}
