@@ -1,5 +1,5 @@
 <script setup>
-import { ref, unref, watch, onMounted, onBeforeUnmount, onUpdated } from 'vue'
+import { ref, unref, onMounted, onBeforeUnmount, onUpdated } from 'vue'
 import logo from './logo.svg'
 import { fetchAllTodos, createTodo, updateTodo, deleteTodo } from './api.js'
 import { handleFormatImages, handleBodyOverflow } from './utils.js'
@@ -50,10 +50,6 @@ const handleCreateForm = state => {
   createForm.value = state
   clearForm()
 }
-
-watch(formDescription, () => {
-  if (unref(invalidDescription)) invalidDescription.value = false
-})
 
 const editToggle = (e, id) => {
   e.preventDefault()
@@ -117,8 +113,10 @@ const handleEscape = e => {
   if (e.key === 'Escape') closeModal()
 }
 
-onMounted(async () => {
-  await handleFetchAllTodos()
+onMounted(() => {
+  (async () => {
+    await handleFetchAllTodos()
+  })()
   window.document.addEventListener('keyup', handleEscape)
 })
 
