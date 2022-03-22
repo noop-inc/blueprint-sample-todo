@@ -8,11 +8,11 @@ import {
 } from './api.js'
 
 const todos = ref([])
-const showCreateForm = ref(false)
-const formDesciption = ref(null)
+const createForm = ref(false)
+const formDescription = ref(null)
 const formImages = ref([])
 const imageInput = ref(null)
-const invalidDesciption = ref(false)
+const invalidDescription = ref(false)
 const invalidImageCount = ref(false)
 const invalidImageSize = ref(false)
 const enlargedImage = ref(null)
@@ -40,14 +40,14 @@ const removeImage = idx => {
 }
 
 const clearForm = () => {
-  formDesciption.value = null
+  formDescription.value = null
   formImages.value = []
-  invalidDesciption.value = false
+  invalidDescription.value = false
   invalidImageCount.value = false
 }
 
 const closeModal = () => {
-  showCreateForm.value = false
+  createForm.value = false
   enlargedImage.value = null
 }
 
@@ -55,18 +55,18 @@ document.addEventListener('keyup', (e) => {
   if (e.key === 'Escape') closeModal()
 })
 
-watch(showCreateForm, clearForm)
+watch(createForm, clearForm)
 
-watch([showCreateForm, enlargedImage], () => {
-  if (unref(showCreateForm) || unref(enlargedImage)) {
+watch([createForm, enlargedImage], () => {
+  if (unref(createForm) || unref(enlargedImage)) {
     window.document.body.style.overflow = 'hidden'
   } else {
     window.document.body.style.overflow = null
   }
 })
 
-watch(formDesciption, () => {
-  if (unref(invalidDesciption)) invalidDesciption.value = false
+watch(formDescription, () => {
+  if (unref(invalidDescription)) invalidDescription.value = false
 })
 
 const editToggle = id => {
@@ -94,19 +94,20 @@ const handleDeleteTodo = async id => {
   todos.value = unref(todos).filter(todo => todo.id !== deletedTodo.id)
 }
 
-const handleSubmit = async () => {
-  if (!unref(formDesciption)?.trim()) {
-    invalidDesciption.value = true
+const handleSubmit = async e => {
+  e.preventDefault()
+  if (!unref(formDescription)?.trim()) {
+    invalidDescription.value = true
   } else {
     const item = [
-      ['description', unref(formDesciption)?.trim()],
+      ['description', unref(formDescription)?.trim()],
       ...unref(formImages).map(({ file }) =>
         ['image', file]
       )
     ]
     const newTodo = await createTodo(item)
     todos.value = [...unref(todos), newTodo]
-    showCreateForm.value = false
+    createForm.value = false
   }
 }
 
@@ -144,84 +145,85 @@ onMounted(async () => {
       <button
         class="form-button"
         title="New Todo"
-        @click="showCreateForm = true"
+        @click="createForm = true"
       >
         {{ 'New Todo' }}
       </button>
     </h1>
   </header>
-  <template v-if="todos.length">
-    <section class="todo-list">
-      <div
-        v-for="{ description, images, id, completed } in todos"
-        :key="id"
-        class="todo-item"
-      >
-        <div class="todo-description">
-          <button
-            type="button"
-            :class="['form-button todo-complete', { completed }]"
-            title="Toggle Complete"
-            @click.prevent="handleUpdateTodo({ id, completed: !completed })"
-          >
-            <span>{{ '✓' }}</span>
-          </button>
-          <button
-            type="button"
-            class="form-button todo-delete"
-            title="Delete"
-            @click.prevent="handleDeleteTodo(id)"
-          >
-            <span>{{ '×' }}</span>
-          </button>
-          <div
-            :class="{ completed }"
-            @dblclick.prevent.stop="editToggle(id)"
-          >
-            <form
-              :class="['edit-form', { 'display-none': editId !== id }]"
-              @submit.prevent="handleEdit"
-              @click.stop
-            >
-              <input
-                :id="`edit-description-${id}`"
-                placeholder="What needs to be completed?"
-                class="form-input edit-description"
-                type="text"
-                autocomplete="off"
-                @blur="editId = null"
-              >
-              <input
-                type="submit"
-                class="display-none"
-              >
-            </form>
-            <span :class="{ 'display-none': editId === id }">{{ description }}</span>
-          </div>
-        </div>
-        <div
-          v-if="images && images.length"
-          class="image-preview-grid"
+  <section
+    v-if="todos.length"
+    class="todo-list"
+  >
+    <div
+      v-for="{ description, images, id, completed } in todos"
+      :key="id"
+      class="todo-item"
+    >
+      <div class="todo-description">
+        <button
+          type="button"
+          :class="['form-button todo-complete', { completed }]"
+          title="Toggle Complete"
+          @click.prevent="handleUpdateTodo({ id, completed: !completed })"
         >
-          <span
-            v-for="key in images"
-            :key="key"
-            class="image-preview-item"
+          <span>{{ '✓' }}</span>
+        </button>
+        <button
+          type="button"
+          class="form-button todo-delete"
+          title="Delete"
+          @click.prevent="handleDeleteTodo(id)"
+        >
+          <span>{{ '×' }}</span>
+        </button>
+        <div
+          :class="{ completed }"
+          @dblclick.prevent.stop="editToggle(id)"
+        >
+          <form
+            :class="['edit-form', { 'display-none': editId !== id }]"
+            @submit.prevent="handleEdit"
+            @click.stop
           >
-            <img :src="`/api/images/${key}`">
-            <button
-              type="button"
-              class="form-button image-preview-button"
-              title="Enlarge Image"
-              @click.prevent="enlargedImage = key"
-            />
-          </span>
+            <input
+              :id="`edit-description-${id}`"
+              placeholder="What needs to be completed?"
+              class="form-input edit-description"
+              type="text"
+              autocomplete="off"
+              @blur="editId = null"
+            >
+            <input
+              type="submit"
+              class="display-none"
+            >
+          </form>
+          <span :class="{ 'display-none': editId === id }">{{ description }}</span>
         </div>
       </div>
-    </section>
-  </template>
+      <div
+        v-if="images && images.length"
+        class="image-preview-grid"
+      >
+        <span
+          v-for="key in images"
+          :key="key"
+          class="image-preview-item"
+        >
+          <img :src="`/api/images/${key}`">
+          <button
+            type="button"
+            class="form-button image-preview-button"
+            title="Enlarge Image"
+            @click.prevent="enlargedImage = key"
+          />
+        </span>
+      </div>
+    </div>
+  </section>
   <section
-    v-if="enlargedImage || showCreateForm"
+    v-if="enlargedImage || createForm"
     class="todo-modal"
     @click="closeModal"
   >
@@ -233,9 +235,9 @@ onMounted(async () => {
       <img :src="`/api/images/${enlargedImage}`">
     </div>
     <form
-      v-if="showCreateForm"
+      v-if="createForm"
       class="todo-form"
-      @submit.prevent="handleSubmit"
+      @submit="handleSubmit"
       @click.stop
     >
       <div class="todo-form-row">
@@ -258,14 +260,14 @@ onMounted(async () => {
         </label>
         <input
           id="form-description"
-          v-model="formDesciption"
+          v-model="formDescription"
           class="form-input"
           type="text"
           autocomplete="off"
           placeholder="What needs to be completed?"
         >
         <label
-          v-if="invalidDesciption"
+          v-if="invalidDescription"
           class="form-error"
         >
           {{ 'Todo description is required' }}
