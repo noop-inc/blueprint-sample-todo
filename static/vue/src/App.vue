@@ -1,11 +1,8 @@
 <script setup>
-import { ref, unref, watch, onMounted, onBeforeUnmount } from 'vue'
-import {
-  fetchAllTodos,
-  createTodo,
-  updateTodo,
-  deleteTodo
-} from './api.js'
+import { ref, unref, watch, onMounted, onBeforeUnmount, onUpdated } from 'vue'
+import logo from './logo.svg'
+import { fetchAllTodos, createTodo, updateTodo, deleteTodo } from './api.js'
+import { handleFormatImages, handleBodyOverflow } from './utils.js'
 
 const todos = ref([])
 const createForm = ref(false)
@@ -19,21 +16,19 @@ const enlargedImage = ref(null)
 const editId = ref(null)
 
 const assignImages = () => {
-  const files = [...unref(imageInput).files]
-  const filterValidSize = files.filter(file => file.size <= 1000000)
-  invalidImageSize.value = files.length !== filterValidSize.length
-  invalidImageCount.value = (unref(formImages).length + filterValidSize.length) > 6
-  const sliceLength = filterValidSize.slice(0, 6 - unref(formImages).length)
-  const formattedFiles = sliceLength.map(file => ({
-    file,
-    key: window.crypto.getRandomValues(new Uint32Array(1))[0],
-    src: URL.createObjectURL(file)
-  }))
-  formImages.value = [...unref(formImages), ...formattedFiles]
+  const {
+    nextImageSize,
+    nextImageCount,
+    nextImages
+  } = handleFormatImages(unref(imageInput).files, unref(formImages))
+  invalidImageSize.value = nextImageSize
+  invalidImageCount.value = nextImageCount
+  formImages.value = nextImages
   unref(imageInput).value = null
 }
 
-const removeImage = idx => {
+const removeImage = (e, idx) => {
+  e.preventDefault()
   invalidImageCount.value = false
   invalidImageSize.value = false
   formImages.value = unref(formImages).filter((_, i) => i !== idx)
@@ -47,27 +42,22 @@ const clearForm = () => {
 }
 
 const closeModal = () => {
-  createForm.value = false
+  handleCreateForm(false)
   enlargedImage.value = null
 }
 
-watch(createForm, clearForm)
-
-watch([createForm, enlargedImage], () => {
-  const overflowStyle =
-    (unref(createForm) || unref(enlargedImage))
-      ? 'hidden'
-      : null
-  if (window.document.body.style.overflow !== overflowStyle) {
-    window.document.body.style.overflow = overflowStyle
-  }
-})
+const handleCreateForm = state => {
+  createForm.value = state
+  clearForm()
+}
 
 watch(formDescription, () => {
   if (unref(invalidDescription)) invalidDescription.value = false
 })
 
-const editToggle = id => {
+const editToggle = (e, id) => {
+  e.preventDefault()
+  e.stopPropagation()
   const currentTodo = unref(todos).find(todo => todo.id === id)
   const input = window.document.getElementById(`edit-description-${id}`)
   input.value = currentTodo.description
@@ -82,12 +72,14 @@ const handleFetchAllTodos = async () => {
   todos.value = allTodo.sort((a, b) => a.created - b.created)
 }
 
-const handleUpdateTodo = async item => {
+const handleUpdateTodo = async (e, item) => {
+  e?.preventDefault()
   const updatedTodo = await updateTodo(item)
   todos.value = unref(todos).map(todo => todo.id === updatedTodo.id ? updatedTodo : todo)
 }
 
-const handleDeleteTodo = async id => {
+const handleDeleteTodo = async (e, id) => {
+  e.preventDefault()
   const deletedTodo = await deleteTodo(id)
   todos.value = unref(todos).filter(todo => todo.id !== deletedTodo.id)
 }
@@ -97,28 +89,28 @@ const handleSubmit = async e => {
   if (!unref(formDescription)?.trim()) {
     invalidDescription.value = true
   } else {
-    const item = [
-      ['description', unref(formDescription)?.trim()],
-      ...unref(formImages).map(({ file }) =>
-        ['image', file]
-      )
-    ]
-    const newTodo = await createTodo(item)
+    const newTodo = await createTodo(unref(formDescription), unref(formImages))
     todos.value = [...unref(todos), newTodo]
-    createForm.value = false
+    handleCreateForm(false)
   }
 }
 
-const handleEdit = async () => {
+const handleEdit = async e => {
+  e.preventDefault()
   const currentTodo = unref(todos).find(todo => todo.id === unref(editId))
   const input = window.document.getElementById(`edit-description-${currentTodo.id}`)
   const value = input.value?.trim()
   if (value) {
     if (value !== currentTodo.description) {
-      await handleUpdateTodo({ id: currentTodo.id, description: value })
+      await handleUpdateTodo(null, { id: currentTodo.id, description: value })
     }
     editId.value = null
   }
+}
+
+const handleEnlargedImage = (e, key) => {
+  e.preventDefault()
+  enlargedImage.value = key
 }
 
 const handleEscape = e => {
@@ -128,6 +120,14 @@ const handleEscape = e => {
 onMounted(async () => {
   await handleFetchAllTodos()
   window.document.addEventListener('keyup', handleEscape)
+})
+
+onUpdated(() => {
+  handleBodyOverflow(unref(createForm), unref(enlargedImage))
+
+  if (unref(invalidDescription) && unref(formDescription)) {
+    invalidDescription.value = false
+  }
 })
 
 onBeforeUnmount(() => {
@@ -145,14 +145,14 @@ onBeforeUnmount(() => {
       >
         <img
           alt="Noop"
-          src="./assets/logo.svg"
+          :src="logo"
         >
       </a>
       <span>{{ 'Todo Application' }}</span>
       <button
         class="form-button"
         title="New Todo"
-        @click="createForm = true"
+        @click="handleCreateForm(true)"
       >
         {{ 'New Todo' }}
       </button>
@@ -172,7 +172,7 @@ onBeforeUnmount(() => {
           type="button"
           :class="['form-button todo-complete', { completed }]"
           title="Toggle Complete"
-          @click.prevent="handleUpdateTodo({ id, completed: !completed })"
+          @click="handleUpdateTodo($event, { id, completed: !completed })"
         >
           <span>{{ '✓' }}</span>
         </button>
@@ -180,17 +180,17 @@ onBeforeUnmount(() => {
           type="button"
           class="form-button todo-delete"
           title="Delete"
-          @click.prevent="handleDeleteTodo(id)"
+          @click="handleDeleteTodo($event, id)"
         >
           <span>{{ '×' }}</span>
         </button>
         <div
           :class="{ completed }"
-          @dblclick.prevent.stop="editToggle(id)"
+          @dblclick="editToggle($event, id)"
         >
           <form
             :class="['edit-form', { 'display-none': editId !== id }]"
-            @submit.prevent="handleEdit"
+            @submit="handleEdit"
             @click.stop
           >
             <input
@@ -223,7 +223,7 @@ onBeforeUnmount(() => {
             type="button"
             class="form-button image-preview-button"
             title="Enlarge Image"
-            @click.prevent="enlargedImage = key"
+            @click="handleEnlargedImage($event, key)"
           />
         </span>
       </div>
@@ -319,7 +319,7 @@ onBeforeUnmount(() => {
               type="button"
               class="form-button image-preview-button"
               title="Remove Image"
-              @click.prevent="removeImage(idx)"
+              @click="removeImage($event, idx)"
             >
               <span>
                 {{ '×' }}

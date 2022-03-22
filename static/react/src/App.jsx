@@ -1,13 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
-import logo from './assets/logo.svg'
-import {
-  fetchAllTodos,
-  createTodo,
-  updateTodo,
-  deleteTodo
-} from './api.js'
+import logo from './logo.svg'
+import { fetchAllTodos, createTodo, updateTodo, deleteTodo } from './api.js'
+import { handleFormatImages, handleBodyOverflow } from './utils.js'
 
-export default () => {
+const App = () => {
   const [mounted, setMounted] = useState(false)
   const [todos, setTodos] = useState([])
   const [createForm, setCreateForm] = useState(false)
@@ -21,17 +17,14 @@ export default () => {
   const [editId, setEditId] = useState(null)
 
   const assignImages = () => {
-    const files = [...imageInput.current.files]
-    const filterValidSize = files.filter(file => file.size <= 1000000)
-    setInvalidImageSize(files.length !== filterValidSize.length)
-    setInvalidImageCount((formImages.length + filterValidSize.length) > 6)
-    const sliceLength = filterValidSize.slice(0, 6 - formImages.length)
-    const formattedFiles = sliceLength.map(file => ({
-      file,
-      key: window.crypto.getRandomValues(new Uint32Array(1))[0],
-      src: URL.createObjectURL(file)
-    }))
-    setFormImages([...formImages, ...formattedFiles])
+    const {
+      nextImageSize,
+      nextImageCount,
+      nextImages
+    } = handleFormatImages(imageInput.current.files, formImages)
+    setInvalidImageSize(nextImageSize)
+    setInvalidImageCount(nextImageCount)
+    setFormImages(nextImages)
     imageInput.current.value = null
   }
 
@@ -91,15 +84,9 @@ export default () => {
   const handleSubmit = async e => {
     e.preventDefault()
     if (!formDescription?.trim()) {
-      setInvalidDescription(() => true)
+      setInvalidDescription(true)
     } else {
-      const item = [
-        ['description', formDescription?.trim()],
-        ...formImages.map(({ file }) =>
-          ['image', file]
-        )
-      ]
-      const newTodo = await createTodo(item)
+      const newTodo = await createTodo(formDescription, formImages)
       setTodos(todos => [...todos, newTodo])
       handleCreateForm(() => false)
     }
@@ -118,24 +105,22 @@ export default () => {
     }
   }
 
+  const handleEnlargedImage = (e, key) => {
+    e.preventDefault()
+    setEnlargedImage(key)
+  }
+
   useEffect(() => {
     if (!mounted) {
       (async () => {
         await handleFetchAllTodos()
       })()
       setMounted(true)
-    }
-
-    const overflowStyle =
-      (createForm || enlargedImage)
-        ? 'hidden'
-        : null
-    if (window.document.body.style.overflow !== overflowStyle) {
-      window.document.body.style.overflow = overflowStyle
-    }
-
-    if (invalidDescription && formDescription) {
-      setInvalidDescription(false)
+    } else {
+      handleBodyOverflow(createForm, enlargedImage)
+      if (invalidDescription && formDescription) {
+        setInvalidDescription(false)
+      }
     }
 
     const handleEscape = e => {
@@ -174,241 +159,216 @@ export default () => {
         </h1>
       </header>
       {
-        todos.length
-          ? (
-            <section className='todo-list'>
-              {
-                todos.map(({ description, images, id, completed }) =>
-                  <div
-                    key={id}
-                    className='todo-item'
-                  >
-                    <div className='todo-description'>
-                      <button
-                        type='button'
-                        className={`form-button todo-complete${completed ? ' completed' : ''}`}
-                        title='Toggle Complete'
-                        onClick={e => handleUpdateTodo(e, { id, completed: !completed })}
-                      >
-                        <span>✓</span>
-                      </button>
-                      <button
-                        type='button'
-                        className='form-button todo-delete'
-                        title='Delete'
-                        onClick={e => handleDeleteTodo(e, id)}
-                      >
-                        <span>×</span>
-                      </button>
-                      <div
-                        className={completed ? 'completed' : ''}
-                        onDoubleClick={e => editToggle(e, id)}
-                      >
-                        <form
-                          className={`edit-form${editId !== id ? ' display-none' : ''}`}
-                          onSubmit={e => handleEdit(e)}
-                          onClick={e => e.stopPropagation()}
-                        >
-                          <input
-                            id={`edit-description-${id}`}
-                            placeholder='What needs to be completed?'
-                            className='form-input edit-description'
-                            type='text'
-                            autoComplete='off'
-                            onBlur={() => setEditId(null)}
-                          />
-                          <input
-                            type='submit'
-                            className='display-none'
-                          />
-                        </form>
-                        <span className={editId === id ? 'display-none' : ''}>{description}</span>
-                      </div>
-                    </div>
-                    {
-                      images && images.length
-                        ? (
-                          <div
-                            className='image-preview-grid'
-                          >
-                            {
-                              images.map(key =>
-                                <span
-                                  key={key}
-                                  className='image-preview-item'
-                                >
-                                  <img src={`/api/images/${key}`} />
-                                  <button
-                                    type='button'
-                                    className='form-button image-preview-button'
-                                    title='Enlarge Image'
-                                    onClick={e => { e.preventDefault(); setEnlargedImage(key) }}
-                                  />
-                                </span>
-                              )
-                            }
-                          </div>
-                          )
-                        : null
-                    }
-                  </div>
-                )
-              }
-            </section>
-            )
-          : null
-      }
-      {
-        (enlargedImage || createForm)
-          ? (
-            <section
-              className='todo-modal'
-              onClick={() => closeModal()}
-            >
-              {
-                enlargedImage
-                  ? (
+        !!todos.length &&
+          <section className='todo-list'>
+            {
+              todos.map(({ description, images, id, completed }) =>
+                <div
+                  key={id}
+                  className='todo-item'
+                >
+                  <div className='todo-description'>
+                    <button
+                      type='button'
+                      className={`form-button todo-complete${completed ? ' completed' : ''}`}
+                      title='Toggle Complete'
+                      onClick={e => handleUpdateTodo(e, { id, completed: !completed })}
+                    >
+                      <span>✓</span>
+                    </button>
+                    <button
+                      type='button'
+                      className='form-button todo-delete'
+                      title='Delete'
+                      onClick={e => handleDeleteTodo(e, id)}
+                    >
+                      <span>×</span>
+                    </button>
                     <div
-                      className='enlarged-image'
-                      onClick={e => e.stopPropagation()}
+                      className={completed ? 'completed' : ''}
+                      onDoubleClick={e => editToggle(e, id)}
                     >
-                      <img src={`/api/images/${enlargedImage}`} />
-                    </div>
-                    )
-                  : null
-              }
-              {
-                createForm
-                  ? (
-                    <form
-                      className='todo-form'
-                      onSubmit={e => handleSubmit(e)}
-                      onClick={e => e.stopPropagation()}
-                    >
-                      <div className='todo-form-row'>
-                        <h5 className='todo-form-header'>
-                          <button
-                            className='form-button todo-close'
-                            title='Close modal'
-                            type='button'
-                            onClick={() => closeModal()}
-                          >
-                            ×
-                          </button>
-                          <span>Provide Todo Details…</span>
-                        </h5>
-                      </div>
-                      <hr className='divider' />
-
-                      <div className='todo-form-row'>
-                        <label htmlFor='form-description'>
-                          Description (required)
-                        </label>
+                      <form
+                        className={`edit-form${editId !== id ? ' display-none' : ''}`}
+                        onSubmit={e => handleEdit(e)}
+                        onClick={e => e.stopPropagation()}
+                      >
                         <input
-                          id='form-description'
-                          onInput={e => setFormDescription(e.target.value)}
-                          className='form-input'
+                          id={`edit-description-${id}`}
+                          placeholder='What needs to be completed?'
+                          className='form-input edit-description'
                           type='text'
                           autoComplete='off'
-                          placeholder='What needs to be completed?'
+                          onBlur={() => setEditId(null)}
                         />
-                        {
-                          invalidDescription
-                            ? (
-                              <label
-                                className='form-error'
-                              >
-                                Todo description is required
-                              </label>
-                              )
-                            : null
-                        }
-                      </div>
-                      <div className='todo-form-row'>
-                        <label htmlFor='form-file'>
-                          Attach up to 6 images, 1MB max each (optional)
-                        </label>
                         <input
-                          id='form-file'
-                          ref={imageInput}
-                          className='form-input'
-                          type='file'
-                          multiple
-                          accept='image/*'
-                          onInput={() => assignImages()}
-                        />
-                        {
-                          invalidImageCount
-                            ? (
-                              <label
-                                className='form-error'
-                              >
-                                Maximum of 6 images can be attached
-                              </label>
-                              )
-                            : null
-                        }
-                        {
-                          invalidImageSize
-                            ? (
-                              <label
-                                className='form-error'
-                              >
-                                Images must be under 1MB
-                              </label>
-                              )
-                            : null
-                        }
-                        {
-                          formImages.length
-                            ? (
-                              <div
-                                className='image-preview-grid'
-                              >
-                                {
-                                  formImages.map(({ src, key }, idx) =>
-                                    <span
-                                      key={key}
-                                      className='image-preview-item'
-                                    >
-                                      <img src={src} />
-                                      <button
-                                        type='button'
-                                        className='form-button image-preview-button'
-                                        title='Remove Image'
-                                        onClick={e => removeImage(e, idx)}
-                                      >
-                                        <span>
-                                          ×
-                                        </span>
-                                      </button>
-                                    </span>
-                                  )
-                                }
-                              </div>
-                              )
-                            : null
-                        }
-                      </div>
-                      <hr className='divider' />
-                      <div className='todo-form-row'>
-                        <button
-                          id='form-submit'
-                          className='form-button'
                           type='submit'
-                          title='Create Todo'
-                        >
-                          Create Todo
-                        </button>
+                          className='display-none'
+                        />
+                      </form>
+                      <span className={editId === id ? 'display-none' : ''}>{description}</span>
+                    </div>
+                  </div>
+                  {
+                    !!images.length &&
+                      <div
+                        className='image-preview-grid'
+                      >
+                        {
+                          images.map(key =>
+                            <span
+                              key={key}
+                              className='image-preview-item'
+                            >
+                              <img src={`/api/images/${key}`} />
+                              <button
+                                type='button'
+                                className='form-button image-preview-button'
+                                title='Enlarge Image'
+                                onClick={e => handleEnlargedImage(e, key)}
+                              />
+                            </span>
+                          )
+                        }
                       </div>
-                    </form>
-                    )
-                  : null
-              }
-            </section>
-            )
-          : null
+                  }
+                </div>
+              )
+            }
+          </section>
+      }
+      {
+        !!(enlargedImage || createForm) &&
+          <section
+            className='todo-modal'
+            onClick={() => closeModal()}
+          >
+            {
+              !!enlargedImage &&
+                <div
+                  className='enlarged-image'
+                  onClick={e => e.stopPropagation()}
+                >
+                  <img src={`/api/images/${enlargedImage}`} />
+                </div>
+            }
+            {
+              !!createForm &&
+                <form
+                  className='todo-form'
+                  onSubmit={e => handleSubmit(e)}
+                  onClick={e => e.stopPropagation()}
+                >
+                  <div className='todo-form-row'>
+                    <h5 className='todo-form-header'>
+                      <button
+                        className='form-button todo-close'
+                        title='Close modal'
+                        type='button'
+                        onClick={() => closeModal()}
+                      >
+                        ×
+                      </button>
+                      <span>Provide Todo Details…</span>
+                    </h5>
+                  </div>
+                  <hr className='divider' />
+
+                  <div className='todo-form-row'>
+                    <label htmlFor='form-description'>
+                      Description (required)
+                    </label>
+                    <input
+                      id='form-description'
+                      onInput={e => setFormDescription(e.target.value)}
+                      className='form-input'
+                      type='text'
+                      autoComplete='off'
+                      placeholder='What needs to be completed?'
+                    />
+                    {
+                      !!invalidDescription &&
+                        <label
+                          className='form-error'
+                        >
+                          Todo description is required
+                        </label>
+                    }
+                  </div>
+                  <div className='todo-form-row'>
+                    <label htmlFor='form-file'>
+                      Attach up to 6 images, 1MB max each (optional)
+                    </label>
+                    <input
+                      id='form-file'
+                      ref={imageInput}
+                      className='form-input'
+                      type='file'
+                      multiple
+                      accept='image/*'
+                      onInput={() => assignImages()}
+                    />
+                    {
+                      !!invalidImageCount &&
+                        <label
+                          className='form-error'
+                        >
+                          Maximum of 6 images can be attached
+                        </label>
+                    }
+                    {
+                      !!invalidImageSize &&
+                        <label
+                          className='form-error'
+                        >
+                          Images must be under 1MB
+                        </label>
+                    }
+                    {
+                      !!formImages.length &&
+                        <div
+                          className='image-preview-grid'
+                        >
+                          {
+                            formImages.map(({ src, key }, idx) =>
+                              <span
+                                key={key}
+                                className='image-preview-item'
+                              >
+                                <img src={src} />
+                                <button
+                                  type='button'
+                                  className='form-button image-preview-button'
+                                  title='Remove Image'
+                                  onClick={e => removeImage(e, idx)}
+                                >
+                                  <span>
+                                    ×
+                                  </span>
+                                </button>
+                              </span>
+                            )
+                          }
+                        </div>
+                    }
+                  </div>
+                  <hr className='divider' />
+                  <div className='todo-form-row'>
+                    <button
+                      id='form-submit'
+                      className='form-button'
+                      type='submit'
+                      title='Create Todo'
+                    >
+                      Create Todo
+                    </button>
+                  </div>
+                </form>
+            }
+          </section>
       }
     </>
   )
 }
+
+export default App
