@@ -19,22 +19,10 @@
 
   <div class="container">
     <div class="row">
-      <form class="form form-vertical" method="POST" action="" role="form">
+      <form class="form form-vertical" method="POST" action="" role="form" enctype="multipart/form-data">
+
         {{form.hidden_tag()}}
 
-        <div class="form-group">
-          {% if form.title.errors %}
-            {{form.title(class="form-control is-invalid")}}
-            {% for error in form.title.errors %}
-              <div class="invalid-feedback">
-                <span> {{ error }} </span>
-              </div>
-            {% endfor %}
-          {% else %}
-            {{ form.title.label()}}
-            {{ form.title(class="form-control form-control-sm")}}
-          {% endif%}
-        </div>
         <div class="form-group">
           {% if form.description.errors %}
             {{form.description(class="form-control is-invalid")}}
@@ -48,17 +36,46 @@
             {{ form.description(class="form-control form-control-sm")}}
           {% endif %}
         </div>
+
         <div class="form-group">
-          {% if form.complete.errors %}
-            {{form.complete(class="form-control is-invalid")}}
-            {% for error in form.description.errors %}
+          {% if form.body.errors %}
+            {{form.body(class="form-control is-invalid")}}
+            {% for error in form.body.errors %}
+              <div class="invalid-feedback">
+                <span> {{ error }} </span>
+              </div>
+            {% endfor %}
+          {% else %}
+            {{ form.body.label()}}
+            {{ form.body(class="form-control form-control-sm")}}
+          {% endif%}
+        </div>
+
+        <div class="form-group">
+          {% if form.files.errors %}
+            {{form.files(class="form-control is-invalid")}}
+            {% for error in form.files.errors %}
+              <div class="invalid-feedback">
+                <span>{{ error }}</span>
+              </div>
+            {% endfor%}
+          {% else %}
+            {{ form.csrf_token}}
+            {{ form.files}}
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          {% if form.completed.errors %}
+            {{form.completed(class="form-control is-invalid")}}
+            {% for error in form.completed.errors %}
               <div class="invalid-feedback">
                 <span>{{ error }}</span>
               </div>
             {% endfor %}
           {% else %}
-            {{ form.complete.label()}}
-            {{ form.complete(class="form-check")}}
+            {{ form.completed.label()}}
+            {{ form.completed(class="form-check")}}
           {% endif %}
 
         </div>
@@ -71,7 +88,7 @@
           <div id="todo-column-{{ todo['id'] }}" class="col-sm-6">
             <div id="todo-card-{{ todo['id'] }}" class="card">
               <div id="todo-body-{{ todo['id'] }}" class="card-body">
-                <h5 id="todo-title-{{ todo['id'] }}" class="card-title"> {{ todo['title'] }}
+                <h5 id="todo-title-{{ todo['id'] }}" class="card-title"> {{ todo['description'] }}
                   {% if todo['complete'] %}
                     <span id="todo-badge-{{ todo['id'] }}" class="badge badge-primary">complete</span>
                   {% else %}
@@ -79,7 +96,7 @@
                   {% endif %}
                 </h5>
                 <p id="todo-text-{{ todo['id'] }}" class="card-text">
-                  {{ todo['description'] }}
+                  {{ todo['body'] }}
                 </p>
                 <button onClick='deleteItem("{{todo['id']}}")'>Remove</button>
                 <button onclick='updateItem("{{todo['id']}}")'>Done</button>

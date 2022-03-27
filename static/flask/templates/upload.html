@@ -1,0 +1,59 @@
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% block scripts %}
+<script src="{{url_for('.static', filename='common.js')}}"></script>
+{{super()}}
+{% endblock %}
+{% block title %}Sample To Do Application{% endblock %}
+
+{% block navbar %}
+<div class="navbar navbar-fixed-top">
+  <!-- ... -->
+</div>
+{% endblock %}
+
+{% block content %}
+  <nav class="navbar navbar-light bg-light">
+    <span class="navbar-brand mb-0 h1">ToDo</span>
+  </nav>
+
+  <div class="container">
+    <div class="row">
+      <form class="form form-vertical" method="POST" action="" role="form" enctype="multipart/form-data">
+
+        {{form.hidden_tag()}}
+
+        <div class="form-group">
+          {% if form.file.errors %}
+            {{form.file(class="form-control is-invalid")}}
+            {% for error in form.file.errors %}
+              <div class="invalid-feedback">
+                <span>{{ error }}</span>
+              </div>
+            {% endfor%}
+          {% else %}
+            {{ form.csrf_token}}
+            {{ form.file}}
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          {% if form.files.errors %}
+            {{form.files(class="form-control is-invalid")}}
+            {% for error in form.files.errors %}
+              <div class="invalid-feedback">
+                <span>{{ error }}</span>
+              </div>
+            {% endfor%}
+          {% else %}
+            {{ form.csrf_token}}
+            {{ form.files}}
+          {% endif %}
+        </div>
+        </div>
+        {{ form.submit(class="btn-lg btn-primary m-5")}}
+      </form>
+    </div>
+  </div>
+
+{% endblock %}
