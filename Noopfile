@@ -1,43 +1,81 @@
-# COMPONENT vue static
-COMPONENT vue service
+# for development/testing
+# 1. uncomment the relevant sections before loading into Noop.
+# 2. for example, to develop flask ui and api, comment out vue/express sections
 
+# vue ui
+# COMPONENT vue service
+# FROM node:16-alpine
+# WORKDIR vue
+# COPY /static/vue/package*.json ./
+# RUN npm ci
+# COPY /static/vue/index.html ./
+# COPY /static/vue/vite.config.js ./
+# COPY /static/vue/public ./public
+# COPY /static/vue/src ./src
+# RUN npm run build
+# # ASSETS dist --single-page-mode --index-file index.html
+# EXPOSE 5000
+# ROUTE *
+# CMD ["npm", "run", "preview"]
+
+# flask ui
+COMPONENT todo service
+FROM python:3.10-alpine
+ENV FLASK_APP index.py
+ENV FLASK_RUN_PORT 9000
+ENV FLASK_ENV development
+WORKDIR /todo
+COPY /static/flask/requirements.txt ./
+COPY /static/flask/index.py ./
+# COPY /static/flask/lib ./lib
+COPY /static/flask/static ./static
+COPY /static/flask/templates ./templates
+RUN python -m pip install -r requirements.txt \
+    && apk add bash \
+    && sed -i 's#root:x:0:0:root:/root:/bin/ash#root:x:0:0:root:/root:/bin/bash#g' /etc/passwd
+CMD ["flask", "run", "--host", "0.0.0.0", "--port", "9000"]
 ROUTE *
+EXPOSE 9000
 
-FROM node:16-alpine
-
-WORKDIR vue
-COPY /static/vue/package*.json ./
-RUN npm ci
-COPY /static/vue/index.html ./
-COPY /static/vue/vite.config.js ./
-COPY /static/vue/public ./public
-COPY /static/vue/src ./src
-RUN npm run build
-
-# ASSETS dist --single-page-mode --index-file index.html
-EXPOSE 5000
-CMD ["npm", "run", "preview"]
-
-COMPONENT express service
-
-ROUTE /api/*
-
+# flask API
+COMPONENT backend service
 RESOURCE DynamoDBTable dynamodb -s hashKeyName=id -s hashKeyType=S
 RESOURCE S3Bucket s3
-
-FROM node:16-alpine
-
-WORKDIR express
-COPY /service/express/package*.json ./
-RUN npm ci
-COPY /service/express/index.js ./
-COPY /service/express/dynamodb.js ./
-COPY /service/express/s3.js ./
-
-EXPOSE 3000
-CMD ["npm", "start"]
-
+FROM python:3.10-alpine
+ENV FLASK_APP index.py
+ENV FLASK_RUN_PORT 8000
+ENV FLASK_ENV development
 ENV DYNAMODB_TABLE $.resources.DynamoDBTable.tableName
 ENV DYNAMODB_ENDPOINT $.resources.DynamoDBTable.endpoint
 ENV S3_BUCKET $.resources.S3Bucket.bucket
 ENV S3_ENDPOINT $.resources.S3Bucket.endpoint
+WORKDIR /backend
+COPY /service/flask/index.py ./
+COPY /service/flask/requirements.txt ./
+COPY /service/flask/dynamodb.py ./
+COPY /service/flask/s3.py ./
+RUN python -m pip install -r requirements.txt \
+    && apk add bash \
+    && sed -i 's#root:x:0:0:root:/root:/bin/ash#root:x:0:0:root:/root:/bin/bash#g' /etc/passwd
+CMD ["flask", "run", "--host", "0.0.0.0", "--port", "8000"]
+ROUTE /api/*
+EXPOSE 8000
+
+# express API
+# COMPONENT express service
+# RESOURCE DynamoDBTable dynamodb -s hashKeyName=id -s hashKeyType=S
+# RESOURCE S3Bucket s3
+# FROM node:16-alpine
+# ENV DYNAMODB_TABLE $.resources.DynamoDBTable.tableName
+# ENV DYNAMODB_ENDPOINT $.resources.DynamoDBTable.endpoint
+# ENV S3_BUCKET $.resources.S3Bucket.bucket
+# ENV S3_ENDPOINT $.resources.S3Bucket.endpoint
+# WORKDIR express
+# COPY /service/express/package*.json ./
+# RUN npm ci
+# COPY /service/express/index.js ./
+# COPY /service/express/dynamodb.js ./
+# COPY /service/express/s3.js ./
+# ROUTE /api/*
+# EXPOSE 3000
+# CMD ["npm", "start"]
