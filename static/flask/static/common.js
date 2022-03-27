@@ -3,14 +3,14 @@
 const defaults = {
   hostname: 'todo.local.noop.app',
   port: 443,
-  path: '/api/item',
+  path: '/api/todos',
   method: 'GET'
 }
 
 function deleteItem(id) {
   console.log(`deleting ${id}`)
   $.ajax({
-    url: `https://todo.local.noop.app/api/item/${id}`,
+    url: `https://todo.local.noop.app/api/todos/${id}`,
     type: 'DELETE',
     success: function (result) {
       console.log(result)
