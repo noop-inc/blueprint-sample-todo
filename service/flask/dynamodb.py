@@ -90,16 +90,16 @@ def put_item(item: dict = None) -> dict:
     response = table.update_item(
         Key={"id": item['id']},
         UpdateExpression=
-        f"set description=:description, body=:body, file=:file, completed=:completed",
+        f"set description=:description, body=:body, files=:files, completed=:completed",
         ExpressionAttributeValues={
             ':description':
             str(item.get('description', 'Example description')),
             ':body':
             str(item.get('body', 'Example ToDo')),
-            ':file':
-            str(item.get('file', '')),
+            ':files':
+            str(item.get('files', [])),
             ':completed':
-            bool(item.get('completde', False))
+            bool(item.get('completed', False))
         },
         ReturnValues="ALL_NEW")
     if response['ResponseMetadata']['HTTPStatusCode'] == 200:
@@ -138,14 +138,14 @@ def update_item(item: dict = None) -> dict:
     response = table.update_item(
         Key={'id': item['id']},
         UpdateExpression=
-        f"set description=:description, body=:body, file=:file, completed=:completed",
+        f"set description=:description, body=:body, files=:files, completed=:completed",
         ExpressionAttributeValues={
             ':description':
             str(item.get('description', defaults['description'])),
             ':body':
             str(item.get('body', defaults['body'])),
-            ':file':
-            str(item.get('file', defaults['file'])),
+            ':files':
+            str(item.get('files', defaults['files'])),
             ':completed':
             bool(item.get('completed', defaults['completed']))
         },

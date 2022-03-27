@@ -1,9 +1,15 @@
+import base64
+import os
+import logging
+from logging import DEBUG
+from logging import StreamHandler
+from logging import Formatter
 from flask import Flask
 from flask import jsonify
 from flask_cors import CORS, cross_origin
 from flask import request
 from dynamodb import scan_table, get_item, put_item, delete_item, update_item
-
+from s3 import get_object, upload_object, delete_object
 app = Flask(__name__)
 cors = CORS(app)
 
@@ -11,6 +17,17 @@ defaults = {
     "name": "backend",
     "purpose": "CRUD methods for ToDo example application"
 }
+
+# configure logging
+logging.basicConfig(level=DEBUG)
+handler = StreamHandler()
+handler.setLevel(DEBUG)
+handler.setFormatter(
+    Formatter('%(asctime)s %(levelname)s: %(message) s'
+              '[in %(pathname)s:%(lineno)d]'))
+app.logger.addHandler(handler)
+
+
 @app.route('/api/_health')
 @cross_origin()
 def home():
@@ -62,3 +79,22 @@ def update(todo_id=None):
 def delete(todo_id):
     result = delete_item(todo_id)
     return jsonify(result)
+
+# image related functions
+@app.route('/api/images', methods=['POST'])
+@cross_origin()
+def image_create():
+    data = request.json
+    if 'file' in data:
+        filename = os.path.join('/tmp', data['filename'])
+        img_data = data['file']
+        # write the image data to a file on the service FS
+        with open(os.path.join('/tmp', data['filename']), 'wb') as f:
+            # decode base64 string
+            f.write(base64.b64decode(img_data))
+
+        result = upload_object(f"{data['id']}/{data['filename']}", filename)
+        app.logger.debug(f"{result}")
+
+        return jsonify({'name': os.path.join('/tmp', data['filename'])})
+    return jsonify(data)
