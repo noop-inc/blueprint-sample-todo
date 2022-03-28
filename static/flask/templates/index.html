@@ -87,6 +87,13 @@
         {% for todo in data %}
           <div id="todo-column-{{ todo['id'] }}" class="col-sm-6">
             <div id="todo-card-{{ todo['id'] }}" class="card">
+              {% if todo['files'] | length > 0 %}
+                {% set filename = todo['files'] | replace("'", "") | replace("[", "") | replace("]", "") %}
+                <img width="200" height="400" class="card-img-top" src="{{url_for('.static', filename="assets/" +  filename )}}"/>
+              {% else %}
+                <img class="card-img-top" src="https://tile.loc.gov/storage-services/service/pnp/pga/12000/12042v.jpg">
+              {% endif %}
+
               <div id="todo-body-{{ todo['id'] }}" class="card-body">
                 <h5 id="todo-title-{{ todo['id'] }}" class="card-title"> {{ todo['description'] }}
                   {% if todo['complete'] %}
