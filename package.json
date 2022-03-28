@@ -7,17 +7,20 @@
     "npm": ">= 8.0.0"
   },
   "scripts": {
-    "fix": "concurrently npm:fix-* --raw --max-processes 1",
-    "fix-eslint": "eslint . --ext .js,.jsx,.vue --fix --cache --cache-location node_modules/.cache/.eslintcache --ignore-path .gitignore",
-    "fix-prettier": "prettier \"**/*.{htm,html,json,md,markdown,yml,yaml}\" --write --ignore-path .gitignore",
-    "lint": "concurrently npm:lint-* --raw --max-processes 1",
-    "lint-eslint": "eslint . --ext .js,.jsx,.vue --cache --cache-location node_modules/.cache/.eslintcache --ignore-path .gitignore",
-    "lint-prettier": "prettier \"**/*.{htm,html,json,md,markdown,yml,yaml}\" --check --ignore-path .gitignore"
+    "common-eslint": "eslint . --ext .js,.jsx,.cjs,.mjs --cache --cache-location node_modules/.cache/.eslintcache --ignore-path .gitignore",
+    "common-prettier": "prettier \"**/*.{htm,html,json,md,markdown,yml,yaml}\" --ignore-path .gitignore",
+    "common-sequential": "concurrently --raw --max-processes 1",
+    "fix": "npm run common-sequential -- npm:fix-*",
+    "fix-eslint": "npm run common-eslint -- --fix",
+    "fix-prettier": "npm run common-prettier -- --write",
+    "lint": "npm run common-sequential -- npm:lint-*",
+    "lint-eslint": "npm run common-eslint",
+    "lint-prettier": "npm run common-prettier -- --check"
   },
   "author": "Noop Inc <hello@noop.dev>",
   "devDependencies": {
     "concurrently": "^7.0.0",
-    "eslint": "^8.11.0",
+    "eslint": "^8.12.0",
     "eslint-config-standard": "^17.0.0-1",
     "eslint-config-standard-jsx": "^11.0.0-1",
     "eslint-plugin-react": "^7.29.4",
@@ -52,6 +55,6 @@
     ]
   },
   "dependencies": {
-    "prettier": "^2.6.0"
+    "prettier": "^2.6.1"
   }
 }
