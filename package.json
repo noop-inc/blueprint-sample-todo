@@ -8,10 +8,10 @@
   },
   "scripts": {
     "fix": "concurrently npm:fix-* --raw --max-processes 1",
-    "fix-eslint": "eslint . --ext .js,.vue --fix --cache --cache-location node_modules/.cache/.eslintcache --ignore-path .gitignore",
+    "fix-eslint": "eslint . --ext .js,.jsx,.vue --fix --cache --cache-location node_modules/.cache/.eslintcache --ignore-path .gitignore",
     "fix-prettier": "prettier \"**/*.{htm,html,json,md,markdown,yml,yaml}\" --write --ignore-path .gitignore",
     "lint": "concurrently npm:lint-* --raw --max-processes 1",
-    "lint-eslint": "eslint . --ext .js,.vue --cache --cache-location node_modules/.cache/.eslintcache --ignore-path .gitignore",
+    "lint-eslint": "eslint . --ext .js,.jsx,.vue --cache --cache-location node_modules/.cache/.eslintcache --ignore-path .gitignore",
     "lint-prettier": "prettier \"**/*.{htm,html,json,md,markdown,yml,yaml}\" --check --ignore-path .gitignore"
   },
   "author": "Noop Inc <hello@noop.dev>",
@@ -19,6 +19,8 @@
     "concurrently": "^7.0.0",
     "eslint": "^8.11.0",
     "eslint-config-standard": "^17.0.0-1",
+    "eslint-config-standard-jsx": "^11.0.0-1",
+    "eslint-plugin-react": "^7.29.4",
     "eslint-plugin-vue": "^8.5.0"
   },
   "eslintConfig": {
@@ -27,9 +29,12 @@
       "vue/setup-compiler-macros": true
     },
     "extends": [
-      "plugin:vue/vue3-recommended",
       "eslint:recommended",
-      "standard"
+      "plugin:vue/vue3-recommended",
+      "plugin:react/recommended",
+      "plugin:react/jsx-runtime",
+      "standard",
+      "standard-jsx"
     ]
   },
   "prettier": {
