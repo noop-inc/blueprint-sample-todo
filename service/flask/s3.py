@@ -48,6 +48,16 @@ transfer = TransferConfig(
     use_threads=True
 )
 
+def list_objects():
+    return [
+        i.key for i in s3.Bucket(S3_BUCKET).objects.all()
+    ]
+
+def list_key_objects(key):
+    return [
+        i.key for i in s3.Bucket(S3_BUCKET).objects.filter(Prefix=f"{key}/")
+    ]
+
 def download_object(key, destination):
     try:
         result = s3.Bucket(S3_BUCKET).download_file(
@@ -69,7 +79,7 @@ def download_object(key, destination):
 def get_object(key):
     try:
         object = s3.Object(S3_BUCKET, key).get()
-        return object.get('Body', None).read().decode('utf-8')
+        return object.get('Body', None).read()
     except ClientError as e:
         return e
 
@@ -87,5 +97,6 @@ def upload_object(key, source):
 def delete_object(key):
     try:
         result = s3.Object(S3_BUCKET, key).delete()
+        return result
     except ClientError as e:
         return e

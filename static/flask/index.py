@@ -1,11 +1,19 @@
 from os import path
 from os import environ as environment
+from os.path import basename
+from os.path import join as pathjoin
 import logging
 from logging import DEBUG
 from logging import StreamHandler
 from logging import Formatter
+from json import dumps
 import requests
+from requests import get, post
 import secrets
+import mimetypes
+from mimetypes import MimeTypes
+import base64
+from base64 import b64encode
 # import string
 from flask import request
 from flask import Flask
@@ -30,7 +38,7 @@ API_URL = environment.get('API_URL', 'https://todo.local.noop.app/api')
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 
 app = Flask(__name__)
-assets_dir = path.join(
+assets_dir = pathjoin(
     path.dirname(app.instance_path), 'static', 'assets'
 )
 app.config['UPLOAD_FOLDER'] = assets_dir
@@ -81,7 +89,7 @@ def upload():
         uploaded_files = []
         file = form.file.data
         filename = secure_filename(file.filename)
-        file.save(path.join(
+        file.save(pathjoin(
             assets_dir,
             filename
         ))
@@ -90,7 +98,7 @@ def upload():
         files = form.files.data
         for file in files:
             filename = secure_filename(file.filename)
-            file.save(path.join(
+            file.save(pathjoin(
                 assets_dir,
                 filename
             ))
@@ -106,7 +114,7 @@ def upload():
 @cross_origin()
 def index():
     app.logger.debug(f"rendering home")
-    todos = requests.get(f"{API_URL}/todos")
+    todos = get(f"{API_URL}/todos")
     app.logger.debug(f"available todos {todos.json()}")
     form = ToDoForm()
     uploaded_files = []
@@ -117,7 +125,7 @@ def index():
         files = form.files.data
         for file in files:
             filename = secure_filename(file.filename)
-            file.save(path.join(
+            file.save(pathjoin(
                 assets_dir,
                 filename
             ))
@@ -142,24 +150,49 @@ def index():
         # body['file'] = path.join(assets_dir, filename)
         # app.logger.debug(f"resolved body {body}")
         # create ToDo
-        result = requests.post(
+        result = post(
             f"{API_URL}/todos",
-            json=body,
+            data=dumps(body),
             headers={
                 'Content-Type': 'application/json'
             }
         )
-        app.logger.debug(f"result {result.json()}")
+        if 'id' in result.json():
+            app.logger.debug(f"found ID in result")
+            for file in files:
+                filename = secure_filename(file.filename)
+                img_file = pathjoin(assets_dir, filename)
+                with open(img_file, 'rb') as f:
+                    mime = MimeTypes().guess_type(img_file)[0]
+                    img_bytes = f.read()
+                    img_enc = b64encode(img_bytes).decode('utf-8')
+                    headers = {
+                        'Content-Type': 'application/json',
+                        'Accept': 'text/plain'
+                    }
+                    payload = {
+                        **result.json(),
+                        'mimetype': mime,
+                        'filename': basename(img_file),
+                        'data': img_enc
+                    }
+                    upload_result = post(
+                        f"{API_URL}/images",
+                        data=dumps(payload),
+                        headers=headers
+                    )
+                    app.logger.debug(f"image publish results {upload_result.json()}")
+        else:
+            app.logger.debug(f"no id in result")
+
+
+        app.logger.debug(f"create result {result.json()}")
         # app.logger.debug(f"create request: {result}")
         todos = requests.get(f"{API_URL}/todos")
         app.logger.debug(f"todos {todos.json()}")
         return redirect(url_for('index'))
     else:
         return render_template('index.html', form=form, data=todos.json())
-
-    # return jsonify({
-    #     'error': True
-    # })
 
 
 @app.route('/delete', methods=['DELETE'])

@@ -9,7 +9,7 @@ from flask import jsonify
 from flask_cors import CORS, cross_origin
 from flask import request
 from dynamodb import scan_table, get_item, put_item, delete_item, update_item
-from s3 import get_object, upload_object, delete_object
+from s3 import get_object, upload_object, delete_object, list_objects, list_key_objects
 app = Flask(__name__)
 cors = CORS(app)
 
@@ -85,16 +85,46 @@ def delete(todo_id):
 @cross_origin()
 def image_create():
     data = request.json
-    if 'file' in data:
+    if 'data' in data:
         filename = os.path.join('/tmp', data['filename'])
-        img_data = data['file']
+        img_data = data['data']
         # write the image data to a file on the service FS
         with open(os.path.join('/tmp', data['filename']), 'wb') as f:
-            # decode base64 string
+            # decode the base64 string
             f.write(base64.b64decode(img_data))
 
         result = upload_object(f"{data['id']}/{data['filename']}", filename)
         app.logger.debug(f"{result}")
 
-        return jsonify({'name': os.path.join('/tmp', data['filename'])})
+        return jsonify({
+            'local': os.path.join('/tmp', data['filename']),
+            'key': f"{data['id']}/{data['filename']}"
+        })
     return jsonify(data)
+
+@app.route('/api/images', methods=['GET'])
+@cross_origin()
+def images_list():
+    results = []
+    args = request.args
+    if 'local' in args and bool(args['local']):
+        results = [i for i in os.listdir('/tmp/') if i.endswith('.jpg')]
+        # return jsonify(results)
+    if 'remote' in args and bool(args['remote']):
+        results = list_objects()
+    return jsonify(results)
+
+@app.route('/api/images/<image_id>', methods=['GET'])
+@cross_origin()
+def images_download(image_id):
+    result = {
+        'message': '0 images associated with this todo'
+    }
+    images = list_key_objects(image_id)
+    app.logger.debug(f"found {images}")
+    if len(images) > 0:
+        image = images[0] #
+        app.logger.debug(f"trying image name {image}")
+        data = get_object(f"{image}")
+        return data
+    return jsonify(result)
