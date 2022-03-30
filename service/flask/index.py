@@ -117,14 +117,27 @@ def images_list():
 @app.route('/api/images/<image_id>', methods=['GET'])
 @cross_origin()
 def images_download(image_id):
+    args = request.args
     result = {
         'message': '0 images associated with this todo'
     }
     images = list_key_objects(image_id)
-    app.logger.debug(f"found {images}")
-    if len(images) > 0:
+    app.logger.debug(f"found {len(images)} files under key {image_id}")
+    if len(images) == 0:
+        return jsonify(result)
+
+    if len(images) > 0 and 'filename' not in args:
         image = images[0] #
-        app.logger.debug(f"trying image name {image}")
+        app.logger.debug(f"using first image in list {image}")
         data = get_object(f"{image}")
         return data
+
+    if len(images) > 0 and 'filename' in args:
+        image = None
+        for image_key in images:
+            if args['filename'] in image_key:
+                image = image_key
+        data = get_object(f"{image}")
+        return data
+
     return jsonify(result)

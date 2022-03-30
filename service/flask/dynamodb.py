@@ -97,7 +97,7 @@ def put_item(item: dict = None) -> dict:
             ':body':
             str(item.get('body', 'Example ToDo')),
             ':files':
-            str(item.get('files', [])),
+            list(item.get('files', [])),
             ':completed':
             bool(item.get('completed', False))
         },
@@ -145,7 +145,7 @@ def update_item(item: dict = None) -> dict:
             ':body':
             str(item.get('body', defaults['body'])),
             ':files':
-            str(item.get('files', defaults['files'])),
+            list(item.get('files', defaults['files'])),
             ':completed':
             bool(item.get('completed', defaults['completed']))
         },
