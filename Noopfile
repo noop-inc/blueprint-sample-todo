@@ -31,6 +31,8 @@ COPY /static/flask/index.py ./
 COPY /static/flask/static ./static
 COPY /static/flask/templates ./templates
 RUN python -m pip install -r requirements.txt \
+    && python -m pip uninstall flask-bootrap bootstrap-flask \
+    && python -m pip install -U bootstrap-flask \
     && apk add bash \
     && sed -i 's#root:x:0:0:root:/root:/bin/ash#root:x:0:0:root:/root:/bin/bash#g' /etc/passwd
 CMD ["flask", "run", "--host", "0.0.0.0", "--port", "9000"]
