@@ -8,7 +8,7 @@ from logging import StreamHandler
 from logging import Formatter
 from json import dumps
 import requests
-from requests import get, post
+from requests import get, post, put
 import secrets
 import mimetypes
 from mimetypes import MimeTypes
@@ -21,12 +21,13 @@ from flask import jsonify
 from flask import redirect
 from flask import url_for
 from flask import flash
-from flask_bootstrap import Bootstrap
+from flask_bootstrap import Bootstrap5
 from werkzeug.utils import secure_filename
 
 from flask_wtf import FlaskForm
 from flask_cors import CORS, cross_origin
 from wtforms import StringField, TextAreaField, BooleanField, MultipleFileField, SubmitField, FileField
+from flask_bootstrap import SwitchField
 # from flask_uploads import configure_uploads, IMAGES, UploadSet
 # from flask_wtf.file import FileField, FileRequired
 from wtforms.validators import DataRequired, regexp
@@ -63,21 +64,21 @@ handler.setFormatter(
 )
 app.logger.addHandler(handler)
 #app.logger.setLevel(DEBUG)
-Bootstrap(app)
+bootstrap = Bootstrap5(app)
 cors = CORS(app)
 
 class ToDoForm(FlaskForm):
-    description = StringField('description', validators=[])
-    body = TextAreaField('body', validators=[])
-    files = MultipleFileField('files', validators=[])
+    description = StringField(label='description', validators=[])
+    body = TextAreaField(label='body', validators=[])
+    files = MultipleFileField(label='files', validators=[])
     # filenames = MultipleFileField('Media', validators=[FileRequired()])
-    completed = BooleanField('completed', default=False,)
-    submit = SubmitField('submit')
+    completed = SwitchField(label='completed', default=False,)
+    submit = SubmitField(label='submit')
 
 class UploadForm(FlaskForm):
-    file = FileField('file', )
-    files = MultipleFileField('files', )
-    submit = SubmitField('submit')
+    file = FileField(label='file', )
+    files = MultipleFileField(label='files', )
+    submit = SubmitField(label='submit')
 
 @app.route('/upload', methods=['GET', 'POST'])
 @cross_origin()
@@ -110,12 +111,11 @@ def upload():
         #return f"Filename: {filename}"
     return render_template('upload.html', form=form)
 
-@app.route('/home', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
 @cross_origin()
 def index():
-    app.logger.debug(f"rendering home")
+
     todos = get(f"{API_URL}/todos")
-    app.logger.debug(f"available todos {todos.json()}")
     form = ToDoForm()
     uploaded_files = []
     #file_form = UploadForm()
@@ -140,16 +140,7 @@ def index():
             'files': uploaded_files,
             'completed': form.completed.data
         }
-        app.logger.debug(f"user input {body}")
-
-        # save file to local storage
-        # TODO: accept multiple files
-        # file = body['file']
-        # filename = secure_filename(file.filename)
-        # file.save(path.join(assets_dir, filename))
-        # body['file'] = path.join(assets_dir, filename)
-        # app.logger.debug(f"resolved body {body}")
-        # create ToDo
+        app.logger.debug(f"sending parameters [  {body}  ]")
         result = post(
             f"{API_URL}/todos",
             data=dumps(body),
@@ -158,7 +149,6 @@ def index():
             }
         )
         if 'id' in result.json():
-            app.logger.debug(f"found ID in result")
             for file in files:
                 filename = secure_filename(file.filename)
                 img_file = pathjoin(assets_dir, filename)
@@ -195,13 +185,62 @@ def index():
         return render_template('index.html', form=form, data=todos.json())
 
 
-@app.route('/delete', methods=['DELETE'])
+@app.route('/<todo_id>', methods=['GET', 'POST'])
 @cross_origin()
-def delete():
-    app.logger.debug(f"rendering delete")
-    return jsonify({'foo': 'bar'})
+def details(todo_id):
+    todos = get(f"{API_URL}/todos").json()
+    form = ToDoForm()
+    data = None
+    for todo in todos:
+        if todo['id'] == todo_id:
+            data = todo
+    if data is not None:
+        form.description.default = todo['description']
+        form.body.default = todo['body']
+        form.completed.default = todo['completed']
 
-@app.route('/update', methods=['PUT'])
-@cross_origin()
-def update():
-    return jsonify({'foo': 'bar'})
+        if form.validate_on_submit():
+            description = form.description.data
+            body = form.body.data
+            files = form.files.data
+            completed = form.completed.data
+
+            body = {
+                'description': description,
+                'body': body,
+                'files': [file.filename for file in files],
+                'completed': completed
+            }
+            result = put(
+                f"{API_URL}/todos/{todo_id}",
+                data=dumps(body),
+                headers={
+                    'Content-Type': 'application/json'
+                }
+            ).json()
+            # handle uploading new file to bucket key
+            if 'id' in result:
+                for file in files:
+                    filename = secure_filename(file.filename)
+                    img_file = pathjoin(assets_dir, filename)
+                    with open(img_file, 'rb') as f:
+                        mime = MimeTypes().guess_type(img_file)[0]
+                        img_bytes = f.read()
+                        img_enc = b64encode(img_bytes).decode('utf-8')
+                        headers = {
+                            'Content-Type': 'application/json',
+                            'Accept': 'text/plain'
+                        }
+                        payload = {
+                            **result, 'mimetype': mime,
+                            'filename': basename(img_file),
+                            'data': img_enc
+                        }
+                        upload_result = post(f"{API_URL}/images",
+                                            data=dumps(payload),
+                                            headers=headers).json()
+                        app.logger.debug(f"image upload results {upload_result}")
+            app.logger.debug(f"update result {result}")
+            return redirect(url_for('index'))
+        return render_template('todo.html', data=data, form=form)
+    return redirect(url_for('index'))
