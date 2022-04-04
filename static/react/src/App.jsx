@@ -210,7 +210,7 @@ const App = () => {
                     </div>
                   </div>
                   {
-                    !!images.length &&
+                    images && images.length &&
                       <div
                         className='image-preview-grid'
                       >
