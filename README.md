@@ -1,1 +1,1 @@
-# blueprint
+# todo-sample-app-components

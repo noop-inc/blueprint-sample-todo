@@ -1,0 +1,45 @@
+version: 2
+updates:
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '12:00'
+    labels:
+      - 'dependabot'
+    open-pull-requests-limit: 50
+    versioning-strategy: 'increase'
+
+  - package-ecosystem: 'npm'
+    directory: '/service/express'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '12:00'
+    labels:
+      - 'dependabot'
+    open-pull-requests-limit: 50
+    versioning-strategy: 'increase'
+
+  - package-ecosystem: 'npm'
+    directory: '/static/react'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '12:00'
+    labels:
+      - 'dependabot'
+    open-pull-requests-limit: 50
+    versioning-strategy: 'increase'
+
+  - package-ecosystem: 'npm'
+    directory: '/static/vue'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '12:00'
+    labels:
+      - 'dependabot'
+    open-pull-requests-limit: 50
+    versioning-strategy: 'increase'
