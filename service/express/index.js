@@ -92,7 +92,7 @@ app.delete('/api/todos/:todoId', async (req, res) => {
   res.json({ id: todoId })
 })
 
-const port = 3000
+const port = 80
 const server = app.listen(port, err =>
   console[err ? 'error' : 'log'](err || `Server running on ${port}`)
 )
