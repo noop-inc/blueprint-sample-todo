@@ -20,11 +20,11 @@
   "author": "Noop Inc <hello@noop.dev>",
   "devDependencies": {
     "concurrently": "^7.1.0",
-    "eslint": "^8.12.0",
+    "eslint": "^8.13.0",
     "eslint-config-standard": "^17.0.0-1",
     "eslint-config-standard-jsx": "^11.0.0-1",
     "eslint-plugin-react": "^7.29.4",
-    "eslint-plugin-vue": "^8.5.0"
+    "eslint-plugin-vue": "^8.6.0"
   },
   "eslintConfig": {
     "root": true,
