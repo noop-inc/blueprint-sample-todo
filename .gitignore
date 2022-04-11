@@ -184,4 +184,4 @@ cython_debug/
 
 # ignore any assets used for development
 assets/
-
+Dockerfile
