@@ -39,7 +39,7 @@ with open(img_file, 'rb') as f:
         **randomid(),
         'mimetype': mime,
         'filename': basename(img_file),
-        'file': fbase64.decode('utf-8'), #convert to string for serialization
+        'data': fbase64.decode('utf-8'), #convert to string for serialization
     }
     result = requests.post(
         f"{API_URL}/images",
