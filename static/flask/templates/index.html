@@ -30,14 +30,14 @@
                     {{ render_form(form) }}
                 </div>
 
-                <div class="row m-auto pt-5">
+                <div class="row m-auto p-5">
                 {% if data |length > 0 %}
 
                     {% for todo in data %}
                     {% set todo_url = "https://todo.local.noop.app" + "/" + todo['id'] %}
-                    <div id="todo-column-{{ todo['id'] }}" class="col-sm-6">
+                    <div id="todo-column-{{ todo['id'] }}" class="col-sm-6 p-1">
 
-                        <div id="todo-card-{{ todo['id'] }}" class="card border-dark w-75" >
+                        <div id="todo-card-{{ todo['id'] }}" class="card rounded rounded-3 border-dark w-75 p-1" >
 
                             {% if todo['files'] | length > 0 %}
                                 {% set file_url = "https://todo.local.noop.app/api/images" + "/" + todo['id'] + "?filename=" + todo['files'][0] %}
@@ -50,7 +50,7 @@
 
                                 <h5 id="todo-title-{{ todo['id'] }}" class="card-title"> {{ todo['description'] }}</h5>
                                 <h6 class="card-subtitle mb-2 text-muted">status:
-                                    {% if todo['complete'] %}
+                                    {% if todo['completed'] %}
                                         <span id="todo-badge-{{ todo['id'] }}" class="badge alert-primary">complete</span>
                                     {% else %}
                                         <span id="todo-badge-{{ todo['id'] }}" class="badge alert-warning">incomplete</span>
