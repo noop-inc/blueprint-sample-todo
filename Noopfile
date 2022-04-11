@@ -60,7 +60,7 @@ COPY /service/express/index.js ./
 COPY /service/express/dynamodb.js ./
 COPY /service/express/s3.js ./
 
-EXPOSE 80
+EXPOSE 3000
 CMD ["npm", "start"]
 
 ENV DYNAMODB_TABLE $.resources.DynamoDBTable.tableName

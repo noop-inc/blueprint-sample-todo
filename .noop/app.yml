@@ -4,6 +4,7 @@ components:
     type: service
     image: node:16-alpine
     root: service/express/
+    port: 3000
     build:
       steps:
         - directory: /express
@@ -28,13 +29,13 @@ components:
         S3_ENDPOINT:
           $env: resources.S3Bucket.endpoint
 
-  - name: vue
+  - name: react
     type: static
     image: node:16-alpine
-    root: static/vue/
+    root: static/react/
     build:
       steps:
-        - directory: /vue
+        - directory: /react
         - copy: package*.json
           destination: ./
         - run: npm ci
@@ -46,13 +47,34 @@ components:
     assets: dist
     singlePage: true
 
+  # - name: vue
+  #   type: static
+  #   image: node:16-alpine
+  #   root: static/vue/
+  #   build:
+  #     steps:
+  #       - directory: /vue
+  #       - copy: package*.json
+  #         destination: ./
+  #       - run: npm ci
+  #       - copy: index.html
+  #       - copy: vite.config.js
+  #       - copy: public/
+  #       - copy: src/
+  #       - run: npm run build
+  #   assets: dist
+  #   singlePage: true
+
 routes:
   - pattern: /api/**
     target:
       component: express
   - pattern: /**
     target:
-      component: vue
+      component: react
+  # - pattern: /**
+  #   target:
+  #     component: vue
 resources:
   - name: DynamoDBTable
     type: dynamodb
