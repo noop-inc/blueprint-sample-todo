@@ -1,7 +1,7 @@
 package com.noop.todosample;
 import java.util.ArrayList;
 // import java.util.concurrent.atomic.AtomicLong;
-// import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 // import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,7 +20,7 @@ public class TodoController {
 
     private static final String id = RandomStringUtils.randomAlphanumeric(15);
 
-    @PostMapping("/todo")
+    @PostMapping("/todos")
     public Todo create(
         @RequestBody TodoParams params
     ) {
@@ -30,5 +30,12 @@ public class TodoController {
             params.body,
             params.files
         );
+    }
+
+    @GetMapping("/todos")
+    public ArrayList<String> getAll() {
+        ArrayList<String> todos = new ArrayList<>();
+        todos.add("test");
+        return todos;
     }
 }
