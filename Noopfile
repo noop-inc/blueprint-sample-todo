@@ -19,49 +19,49 @@
 # CMD ["npm", "run", "preview"]
 
 # flask ui
-COMPONENT todo service
-FROM python:3.10-alpine
-ENV FLASK_APP index.py
-ENV FLASK_RUN_PORT 9000
-ENV FLASK_ENV development
-WORKDIR /todo
-COPY /static/flask/requirements.txt ./
-COPY /static/flask/index.py ./
-# COPY /static/flask/lib ./lib
-COPY /static/flask/static ./static
-COPY /static/flask/templates ./templates
-RUN python -m pip install -r requirements.txt \
-    && python -m pip uninstall flask-bootrap bootstrap-flask \
-    && python -m pip install -U bootstrap-flask \
-    && apk add bash \
-    && sed -i 's#root:x:0:0:root:/root:/bin/ash#root:x:0:0:root:/root:/bin/bash#g' /etc/passwd
-CMD ["flask", "run", "--host", "0.0.0.0", "--port", "9000"]
-ROUTE *
-EXPOSE 9000
+# COMPONENT todo service
+# FROM python:3.10-alpine
+# ENV FLASK_APP index.py
+# ENV FLASK_RUN_PORT 9000
+# ENV FLASK_ENV development
+# WORKDIR /todo
+# COPY /static/flask/requirements.txt ./
+# COPY /static/flask/index.py ./
+# # COPY /static/flask/lib ./lib
+# COPY /static/flask/static ./static
+# COPY /static/flask/templates ./templates
+# RUN python -m pip install -r requirements.txt \
+#     && python -m pip uninstall flask-bootrap bootstrap-flask \
+#     && python -m pip install -U bootstrap-flask \
+#     && apk add bash \
+#     && sed -i 's#root:x:0:0:root:/root:/bin/ash#root:x:0:0:root:/root:/bin/bash#g' /etc/passwd
+# CMD ["flask", "run", "--host", "0.0.0.0", "--port", "9000"]
+# ROUTE *
+# EXPOSE 9000
 
-# flask API
-COMPONENT backend service
-RESOURCE DynamoDBTable dynamodb -s hashKeyName=id -s hashKeyType=S
-RESOURCE S3Bucket s3
-FROM python:3.10-alpine
-ENV FLASK_APP index.py
-ENV FLASK_RUN_PORT 8000
-ENV FLASK_ENV development
-ENV DYNAMODB_TABLE $.resources.DynamoDBTable.tableName
-ENV DYNAMODB_ENDPOINT $.resources.DynamoDBTable.endpoint
-ENV S3_BUCKET $.resources.S3Bucket.bucket
-ENV S3_ENDPOINT $.resources.S3Bucket.endpoint
-WORKDIR /backend
-COPY /service/flask/index.py ./
-COPY /service/flask/requirements.txt ./
-COPY /service/flask/dynamodb.py ./
-COPY /service/flask/s3.py ./
-RUN python -m pip install -r requirements.txt \
-    && apk add bash \
-    && sed -i 's#root:x:0:0:root:/root:/bin/ash#root:x:0:0:root:/root:/bin/bash#g' /etc/passwd
-CMD ["flask", "run", "--host", "0.0.0.0", "--port", "8000"]
-ROUTE /api/*
-EXPOSE 8000
+# # flask API
+# COMPONENT backend service
+# RESOURCE DynamoDBTable dynamodb -s hashKeyName=id -s hashKeyType=S
+# RESOURCE S3Bucket s3
+# FROM python:3.10-alpine
+# ENV FLASK_APP index.py
+# ENV FLASK_RUN_PORT 8000
+# ENV FLASK_ENV development
+# ENV DYNAMODB_TABLE $.resources.DynamoDBTable.tableName
+# ENV DYNAMODB_ENDPOINT $.resources.DynamoDBTable.endpoint
+# ENV S3_BUCKET $.resources.S3Bucket.bucket
+# ENV S3_ENDPOINT $.resources.S3Bucket.endpoint
+# WORKDIR /backend
+# COPY /service/flask/index.py ./
+# COPY /service/flask/requirements.txt ./
+# COPY /service/flask/dynamodb.py ./
+# COPY /service/flask/s3.py ./
+# RUN python -m pip install -r requirements.txt \
+#     && apk add bash \
+#     && sed -i 's#root:x:0:0:root:/root:/bin/ash#root:x:0:0:root:/root:/bin/bash#g' /etc/passwd
+# CMD ["flask", "run", "--host", "0.0.0.0", "--port", "8000"]
+# ROUTE /api/*
+# EXPOSE 8000
 
 # express API
 # COMPONENT express service
@@ -81,3 +81,35 @@ EXPOSE 8000
 # ROUTE /api/*
 # EXPOSE 3000
 # CMD ["npm", "start"]
+
+# Spring Boot API
+COMPONENT spring service
+RESOURCE DynamoDBTable dynamodb -s hashKeyName=id -s hashKeyType=S
+RESOURCE S3Bucket s3
+FROM openjdk:18-jdk-alpine3.15 as builder
+ENV DYNAMODB_TABLE $.resources.DynamoDBTable.tableName
+ENV DYNAMODB_ENDPOINT $.resources.DynamoDBTable.endpoint
+ENV S3_BUCKET $.resources.S3Bucket.bucket
+ENV S3_ENDPOINT $.resources.S3Bucket.endpoint
+
+WORKDIR /service/todo-sample
+COPY /service/spring/todo-sample/pom.xml ./pom.xml
+COPY /service/spring/todo-sample/src/ ./src
+COPY /service/spring/todo-sample/mvnw ./mvnw
+COPY /service/spring/todo-sample/mvnw.cmd ./mvnw.cmd
+
+
+RUN apk add maven \
+    && mvn clean package
+
+
+FROM openjdk:18-jdk-alpine3.15
+
+WORKDIR /service
+
+COPY --from=builder /service/todo-sample/target/todo-sample-0.0.1-SNAPSHOT.jar .
+
+CMD ["java", "-jar", "todo-sample-0.0.1-SNAPSHOT.jar"]
+
+ROUTE /api/*
+EXPOSE 8080
