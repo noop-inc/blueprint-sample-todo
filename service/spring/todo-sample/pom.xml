@@ -17,6 +17,7 @@
 		<java.version>18</java.version>
 	</properties>
 	<dependencyManagement>
+
 	<dependencies>
 		<dependency>
 			<groupId>com.amazonaws</groupId>
@@ -27,7 +28,9 @@
 		</dependency>
 	</dependencies>
 	</dependencyManagement>
+
 	<dependencies>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
@@ -36,6 +39,12 @@
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.amazonaws</groupId>
+			<artifactId>aws-java-sdk-core</artifactId>
+			<version>1.12.197</version>
 		</dependency>
 
 		<dependency>
