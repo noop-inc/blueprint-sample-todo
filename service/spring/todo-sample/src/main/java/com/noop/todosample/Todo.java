@@ -1,15 +1,16 @@
 package com.noop.todosample;
 
-import java.util.ArrayList;
+
 import java.util.Date;
+import java.util.List;
 
 public class Todo {
     private final String id;
     private final String body;
-    private final ArrayList<String> files;
+    private final List<String> files;
     private final Date created;
 
-    public Todo(String id, String body, ArrayList<String> files) {
+    public Todo(String id, String body, List<String> files) {
         this.id = id;
         this.body = body;
         this.files = files;
@@ -25,7 +26,7 @@ public class Todo {
         return body;
     }
 
-    public ArrayList<String> getFiles() {
+    public List<String> getFiles() {
         return files;
     }
 
