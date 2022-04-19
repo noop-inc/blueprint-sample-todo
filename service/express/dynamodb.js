@@ -23,6 +23,7 @@ const documentClient = DynamoDBDocumentClient.from(dynamoDbClient)
 
 const sendCommand = async command => await documentClient.send(command)
 
+// Scans DynamoDB table and returns all todos
 export const scanTable = async () => {
   const params = {
     TableName: DynamoDbTable
@@ -32,6 +33,7 @@ export const scanTable = async () => {
   return data.Items
 }
 
+// Get a single todo matching the provided id
 export const getItem = async id => {
   const params = {
     TableName: DynamoDbTable,
@@ -44,6 +46,8 @@ export const getItem = async id => {
   return data.Item
 }
 
+// Creates a new todo or updates an exisiting todo
+// If a new todo a string UUID will be generated for the todo
 export const putItem = async item => {
   const newItem = { id: randomUUID(), ...item }
   const params = {
@@ -55,6 +59,7 @@ export const putItem = async item => {
   return newItem
 }
 
+// Deletes a todo matching the provided id
 export const deleteItem = async id => {
   const params = {
     TableName: DynamoDbTable,
