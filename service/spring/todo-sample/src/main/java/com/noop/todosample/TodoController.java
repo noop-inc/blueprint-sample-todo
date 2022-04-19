@@ -8,7 +8,7 @@ import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.PutItemResult;
 import com.amazonaws.services.dynamodbv2.model.UpdateItemResult;
 import com.amazonaws.services.dynamodbv2.model.DeleteItemResult;
-import com.amazonaws.services.dynamodbv2.model.PutItemResult;
+// import com.amazonaws.services.dynamodbv2.model.PutItemResult;
 // import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 
 // import java.util.concurrent.atomic.AtomicLong;
@@ -73,18 +73,18 @@ public class TodoController {
     }
 
     @GetMapping("/api/todos")
-    public List<Map<String, AttributeValue>> list() {
+    public List<Map<String, Object>> list() {
         logger.info("listing existing Todo records");
         DynamoTable dynamo = new DynamoTable("todos");
-        List<Map<String, AttributeValue>> items = dynamo.getItems();
+        List<Map<String, Object>> items = dynamo.getItems();
         return items;
     }
 
     @GetMapping("/api/todos/{id}")
-    public Map<String, AttributeValue> get(@PathVariable String id) {
+    public Map<String, Object> get(@PathVariable String id) {
         logger.info("requested Todo Id: " + id);
         DynamoTable dynamo = new DynamoTable("todos");
-        Map<String, AttributeValue> item = dynamo.getItem(id);
+        Map<String, Object> item = dynamo.getItem(id);
         return item;
     }
 
