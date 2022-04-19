@@ -5,8 +5,8 @@ package com.noop.todosample;
 // import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.Map.Entry;
+// import java.util.Set;
+// import java.util.Map.Entry;
 import java.util.ArrayList;
 // import java.util.Arrays;
 // import java.util.Collection;
@@ -15,6 +15,7 @@ import java.util.HashMap;
 // Service clients
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
+import com.amazonaws.services.dynamodbv2.document.Item;
 
 // Document objects
 // import com.amazonaws.services.dynamodbv2.document.DynamoDB;
@@ -23,8 +24,9 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 
 
 // models
+import com.amazonaws.services.dynamodbv2.document.ItemUtils;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.AttributeAction;
+// import com.amazonaws.services.dynamodbv2.model.AttributeAction;
 import com.amazonaws.services.dynamodbv2.model.AttributeValueUpdate;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 // import com.fasterxml.jackson.databind.annotation.JsonAppend.Attr;
@@ -85,16 +87,24 @@ public class DynamoTable {
                 .build();
     }
 
-    public List<Map<String, AttributeValue>> getItems() {
+    public List<Map<String, Object>> getItems() {
         AmazonDynamoDB client = this.getClient();
         ScanRequest request = new ScanRequest().withTableName(this.tableName);
-        return client.scan(request).getItems();
+        List<Map<String, AttributeValue>> items = client.scan(request).getItems();
+        List<Map<String, Object>> todos = new ArrayList<>();
+        // convert list of items to list of native objects
+        for (Map<String, AttributeValue> item: items) {
+            Map<String, Object> todo = ItemUtils.toSimpleMapValue(item);
+            logger.info("iterating todo: " + todo);
+            todos.add(todo);
+        }
+        logger.info("built todos list: " + todos.toString());
+        return todos;
     }
 
-    public Map<String, AttributeValue> getItem( String id) {
+    public Map<String, Object> getItem( String id) {
         AmazonDynamoDB client = this.getClient();
         GetItemRequest request = new GetItemRequest();
-        // request.setTableName(this.tableName);
         request.setTableName(this.getTableName());
         request.setReturnConsumedCapacity(ReturnConsumedCapacity.TOTAL);
         request.setProjectionExpression("id, body, files");
@@ -108,46 +118,22 @@ public class DynamoTable {
         request.setKey(keyMap);
 
         try {
-            /*
-             * TODO: return clean objects
-             * currently returns:
-             * [
-             *      {
-             *          "files": {
-             *              "s": null,
-             *              ...,
-             *              "l": [
-             *                      ...
-             *                  ]
-             *          }
-             *      }
-             * ]
-             * but should be:
-             * [
-             *      {
-             *          id: 'value',
-             *          files: [
-             *           value,
-             *           value,
-             *          ]
-             *      }
-             * ]
-             */
             GetItemResult result = client.getItem(request);
             Map<String, AttributeValue> item = result.getItem();
 
-            // try using an entry set or ItemConverter to help clean the item values
-            Set<Entry<String, AttributeValue>> entries = item.entrySet();
-            for (Entry<String, AttributeValue> entry: entries) {
-                logger.info("item key: " + entry.getKey());
-                logger.info("item value: " + entry.getValue().toString());
-                // entry.getValue()
-            }
-            return item;
+            // Set<Entry<String, AttributeValue>> entries = item.entrySet();
+            // for (Entry<String, AttributeValue> entry: entries) {
+            //     logger.info("item key: " + entry.getKey());
+            //     logger.info("item value: " + entry.getValue().toString());
+            // }
+            Map<String, Object> todo = ItemUtils.toSimpleMapValue(item);
+            logger.info("test values: " + todo.toString() );
+            return todo;
 
         } catch (AmazonServiceException e) {
-             Map<String, AttributeValue> error = new HashMap<>();
-             error.put("message", new AttributeValue(e.getErrorMessage()));
+             Map<String, Object> error = new HashMap<>();
+             error.put("message", e.getErrorMessage());
+
              return error;
         }
     }
@@ -162,7 +148,8 @@ public class DynamoTable {
             the compiler will warn, but we can ignore it since we know files is an ArrayList defined in our class
         */
         ArrayList<String> requestFiles = (ArrayList<String>)params.get("files");
-        // build list Attribute
+
+        // build List<AttributeValue> for withL
         List<AttributeValue> itemFiles = new ArrayList<>();
         for (String file: requestFiles) {
             logger.info("add file to itemFiles: " + file);
@@ -170,12 +157,13 @@ public class DynamoTable {
                 new AttributeValue(file)
             );
         }
-        // prepare the Todo to be written
+
+        // prepare Todo
         item.put("id", new AttributeValue(params.get("id").toString()));
         item.put("body", new AttributeValue(params.get("body").toString()));
         item.put("files", new AttributeValue().withL(itemFiles));
 
-        // perform the put request
+        // put todo
         PutItemRequest request = new PutItemRequest()
             .withTableName(this.tableName)
             .withItem(item);
