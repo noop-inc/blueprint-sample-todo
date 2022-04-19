@@ -13,6 +13,8 @@ app.use(express.json())
 app.use(morgan('tiny'))
 
 const storage = multer.memoryStorage()
+
+// Limit Uploads to 6 files, max size 1MB each per todo
 const upload = multer({
   storage,
   limits: {
@@ -27,6 +29,8 @@ app.get('/favicon.ico', (req, res) => {
 })
 
 // get image
+//
+// Param `imageId` corresponds to the key of an image file in S3
 app.get('/api/images/:imageId', async (req, res) => {
   const params = req.params
   const imageId = params.imageId
@@ -43,8 +47,15 @@ app.get('/api/todos', async (req, res) => {
 })
 
 // create new todo
+//
+// Payload (req.body):
+//   description / type: String / required
+//
+// Files (req.files):
+//   images / type: File/Buffer / optional
 app.post('/api/todos', uploader, async (req, res) => {
   const files = req?.files || []
+  // Uploads images to S3, returns array of S3 keys for uploaded files
   const images = await Promise.all(
     files.map(file => uploadObject(file))
   )
@@ -55,12 +66,15 @@ app.post('/api/todos', uploader, async (req, res) => {
     created: Date.now(),
     completed: false
   }
+  // If images were included with todo includes array of S3 keys for images with todo
   if (images.length) newTodo.images = images
   const item = await putItem(newTodo)
   res.json(item)
 })
 
 // get todo
+//
+// Param `todoId` corresponds to the id of a todo stored in DynamoDB
 app.get('/api/todos/:todoId', async (req, res) => {
   const params = req.params
   const todoId = params.todoId
@@ -69,6 +83,12 @@ app.get('/api/todos/:todoId', async (req, res) => {
 })
 
 // update todo
+//
+// Param `todoId` corresponds to the id of a todo stored in DynamoDB
+//
+// Payload (req.body):
+//   description / type: String / optional
+//   completed / type: Boolean / optional
 app.put('/api/todos/:todoId', async (req, res) => {
   const params = req.params
   const todoId = params.todoId
@@ -80,15 +100,20 @@ app.put('/api/todos/:todoId', async (req, res) => {
 })
 
 // delete todo
+//
+// Param `todoId` corresponds to the id of a todo stored in DynamoDB
 app.delete('/api/todos/:todoId', async (req, res) => {
   const params = req.params
   const todoId = params.todoId
+  // Gets todo to be deleted from DynamoDB
   const item = await getItem(todoId)
   const images = item.images || []
+  // If todo has associated images in S3, then delete those images
   await Promise.all([
     deleteItem(todoId),
     ...images.map(imageId => deleteObject(imageId))
   ])
+  // Returned delete todo's id to indicate it was successfully deleted
   res.json({ id: todoId })
 })
 

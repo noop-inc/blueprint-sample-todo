@@ -16,6 +16,7 @@ const s3Client = new S3Client({
 
 const sendCommand = async command => await s3Client.send(command)
 
+// Get an S3 object matching the provided key, returns object as a buffer
 export const getObject = async key => {
   const params = {
     Bucket: S3Bucket,
@@ -26,6 +27,7 @@ export const getObject = async key => {
   return data.Body
 }
 
+// Uploads file to S3, generates string UUID as key for resulting object
 export const uploadObject = async ({ buffer, mimetype }) => {
   const ext = extension(mimetype)
   const id = randomUUID()
@@ -44,6 +46,7 @@ export const uploadObject = async ({ buffer, mimetype }) => {
   return key
 }
 
+// Deletes object matching the provided key
 export const deleteObject = async key => {
   const params = {
     Bucket: S3Bucket,
