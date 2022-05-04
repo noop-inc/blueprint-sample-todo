@@ -9,11 +9,11 @@
   },
   "author": "Noop Inc <hello@noop.dev>",
   "dependencies": {
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react": "^18.1.0",
+    "react-dom": "^18.1.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^1.3.1",
-    "vite": "^2.9.5"
+    "@vitejs/plugin-react": "^1.3.2",
+    "vite": "^2.9.7"
   }
 }
