@@ -1,0 +1,84 @@
+---
+components:
+  - name: express
+    type: service
+    image: node:16-alpine
+    root: service/express/
+    port: 3000
+    build:
+      steps:
+        - directory: /express
+        - copy: package*.json
+          destination: ./
+        - run: npm ci
+        - copy: index.js
+        - copy: dynamodb.js
+        - copy: s3.js
+    runtime:
+      command: npm start
+      resources:
+        - DynamoDBTable
+        - S3Bucket
+      variables:
+        DYNAMODB_TABLE:
+          $env: resources.DynamoDBTable.tableName
+        DYNAMODB_ENDPOINT:
+          $env: resources.DynamoDBTable.endpoint
+        S3_BUCKET:
+          $env: resources.S3Bucket.bucket
+        S3_ENDPOINT:
+          $env: resources.S3Bucket.endpoint
+
+  - name: react
+    type: static
+    image: node:16-alpine
+    root: static/react/
+    build:
+      steps:
+        - directory: /react
+        - copy: package*.json
+          destination: ./
+        - run: npm ci
+        - copy: index.html
+        - copy: vite.config.js
+        - copy: public/
+        - copy: src/
+        - run: npm run build
+    assets: dist
+    singlePage: true
+
+  # - name: vue
+  #   type: static
+  #   image: node:16-alpine
+  #   root: static/vue/
+  #   build:
+  #     steps:
+  #       - directory: /vue
+  #       - copy: package*.json
+  #         destination: ./
+  #       - run: npm ci
+  #       - copy: index.html
+  #       - copy: vite.config.js
+  #       - copy: public/
+  #       - copy: src/
+  #       - run: npm run build
+  #   assets: dist
+  #   singlePage: true
+
+routes:
+  - pattern: /api/**
+    target:
+      component: express
+  - pattern: /**
+    target:
+      component: react
+  # - pattern: /**
+  #   target:
+  #     component: vue
+resources:
+  - name: DynamoDBTable
+    type: dynamodb
+    hashKeyName: id
+    hashKeyType: S
+  - name: S3Bucket
+    type: s3
