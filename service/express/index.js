@@ -12,13 +12,10 @@ app.use(cors())
 app.use(express.json())
 app.use(morgan('tiny'))
 
-const storage = multer.memoryStorage()
-
 // Limit Uploads to 6 files, max size 1MB each per todo
 const upload = multer({
-  storage,
   limits: {
-    fileSize: 1000000,
+    fileSize: '1MB',
     files: 6
   }
 })
