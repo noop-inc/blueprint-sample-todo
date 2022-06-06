@@ -20,7 +20,7 @@
   "author": "Noop Inc <hello@noop.dev>",
   "devDependencies": {
     "concurrently": "^7.2.1",
-    "eslint": "^8.16.0",
+    "eslint": "^8.17.0",
     "eslint-config-standard": "^17.0.0",
     "eslint-config-standard-jsx": "^11.0.0",
     "eslint-plugin-react": "^7.30.0",
