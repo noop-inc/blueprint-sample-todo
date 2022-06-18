@@ -86,7 +86,10 @@
 COMPONENT spring service
 RESOURCE DynamoDBTable dynamodb -s hashKeyName=id -s hashKeyType=S
 RESOURCE S3Bucket s3
+
 FROM openjdk:18-jdk-alpine3.15 as builder
+
+ENV AWS_REGION us-east-1
 ENV DYNAMODB_TABLE $.resources.DynamoDBTable.tableName
 ENV DYNAMODB_ENDPOINT $.resources.DynamoDBTable.endpoint
 ENV S3_BUCKET $.resources.S3Bucket.bucket
