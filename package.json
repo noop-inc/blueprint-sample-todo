@@ -19,8 +19,8 @@
   },
   "author": "Noop Inc <hello@noop.dev>",
   "devDependencies": {
-    "concurrently": "^7.2.1",
-    "eslint": "^8.17.0",
+    "concurrently": "^7.2.2",
+    "eslint": "^8.18.0",
     "eslint-config-standard": "^17.0.0",
     "eslint-config-standard-jsx": "^11.0.0",
     "eslint-plugin-react": "^7.30.0",
@@ -55,6 +55,6 @@
     ]
   },
   "dependencies": {
-    "prettier": "^2.6.2"
+    "prettier": "^2.7.1"
   }
 }
