@@ -23,8 +23,9 @@
     "eslint": "^8.18.0",
     "eslint-config-standard": "^17.0.0",
     "eslint-config-standard-jsx": "^11.0.0",
-    "eslint-plugin-react": "^7.30.0",
-    "eslint-plugin-vue": "^9.1.1"
+    "eslint-plugin-react": "^7.30.1",
+    "eslint-plugin-vue": "^9.1.1",
+    "prettier": "^2.7.1"
   },
   "eslintConfig": {
     "root": true,
@@ -53,8 +54,5 @@
     "**/*.{htm,html,json,md,markdown,yml,yaml}": [
       "prettier --write --ignore-path .gitignore"
     ]
-  },
-  "dependencies": {
-    "prettier": "^2.7.1"
   }
 }
