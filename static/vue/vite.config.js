@@ -5,15 +5,17 @@ import vue from '@vitejs/plugin-vue'
 export default defineConfig({
   plugins: [vue()],
   server: {
-    port: 8080,
     hmr: {
       protocol: 'ws',
-      host: 'localhost',
-      port: 8080
+      host: 'localhost'
     }
   },
   preview: {
-    host: true,
-    port: 5000
+    host: true
+  },
+  build: {
+    target: 'esnext',
+    minify: false,
+    reportCompressedSize: false
   }
 })
