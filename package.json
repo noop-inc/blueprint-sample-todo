@@ -1,7 +1,6 @@
 {
   "name": "blueprint-sample-todo",
   "version": "0.0.0",
-  "description": "",
   "engines": {
     "node": ">= 16.0.0",
     "npm": ">= 8.0.0"
