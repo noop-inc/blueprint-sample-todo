@@ -1,5 +1,5 @@
 {
-  "name": "todo-sample-app-components",
+  "name": "blueprint-sample-todo",
   "version": "0.0.0",
   "description": "",
   "engines": {
@@ -20,7 +20,7 @@
   "author": "Noop Inc <hello@noop.dev>",
   "devDependencies": {
     "concurrently": "^7.3.0",
-    "eslint": "^8.21.0",
+    "eslint": "^8.22.0",
     "eslint-config-standard": "^17.0.0",
     "eslint-config-standard-jsx": "^11.0.0",
     "eslint-plugin-react": "^7.30.1",
@@ -46,13 +46,5 @@
     "singleQuote": true,
     "trailingComma": "none",
     "arrowParens": "avoid"
-  },
-  "lint-staged": {
-    "**/*.{js,cjs,mjs,vue}": [
-      "eslint --fix --cache --cache-location node_modules/.cache/.eslintcache --ignore-path .gitignore"
-    ],
-    "**/*.{htm,html,json,md,markdown,yml,yaml}": [
-      "prettier --write --ignore-path .gitignore"
-    ]
   }
 }
