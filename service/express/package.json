@@ -10,7 +10,7 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.145.0",
     "@aws-sdk/client-s3": "^3.145.0",
-    "@aws-sdk/lib-dynamodb": "^3.145.0",
+    "@aws-sdk/lib-dynamodb": "^3.154.0",
     "@aws-sdk/lib-storage": "^3.145.0",
     "cors": "^2.8.5",
     "express": "^5.0.0-beta.1",
