@@ -7,7 +7,7 @@
   },
   "scripts": {
     "common-eslint": "eslint . --ext .js,.jsx,.cjs,.mjs --cache --cache-location node_modules/.cache/.eslintcache --ignore-path .gitignore",
-    "common-prettier": "prettier \"**/*.{htm,html,json,md,markdown,yml,yaml}\" --ignore-path .gitignore",
+    "common-prettier": "prettier \"**/*.{htm,html,json,md,markdown,yml,yaml}\" --cache --ignore-path .gitignore",
     "common-sequential": "concurrently --raw --max-processes 1",
     "fix": "npm run common-sequential -- npm:fix-*",
     "fix-eslint": "npm run common-eslint -- --fix",
@@ -19,11 +19,11 @@
   "author": "Noop Inc <hello@noop.dev>",
   "devDependencies": {
     "concurrently": "^7.3.0",
-    "eslint": "^8.22.0",
+    "eslint": "^8.23.0",
     "eslint-config-standard": "^17.0.0",
     "eslint-config-standard-jsx": "^11.0.0",
-    "eslint-plugin-react": "^7.30.1",
-    "eslint-plugin-vue": "^9.3.0",
+    "eslint-plugin-react": "^7.31.1",
+    "eslint-plugin-vue": "^9.4.0",
     "prettier": "^2.7.1"
   },
   "eslintConfig": {
