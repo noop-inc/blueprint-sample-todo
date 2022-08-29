@@ -8,7 +8,7 @@
   },
   "author": "Noop Inc <hello@noop.dev>",
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.145.0",
+    "@aws-sdk/client-dynamodb": "^3.159.0",
     "@aws-sdk/client-s3": "^3.145.0",
     "@aws-sdk/lib-dynamodb": "^3.145.0",
     "@aws-sdk/lib-storage": "^3.145.0",
