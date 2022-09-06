@@ -20,6 +20,8 @@ components:
         - DynamoDBTable
         - S3Bucket
       variables:
+        AWS_REGION:
+          $env: region
         DYNAMODB_TABLE:
           $env: resources.DynamoDBTable.tableName
         DYNAMODB_ENDPOINT:
@@ -30,9 +32,10 @@ components:
           $env: resources.S3Bucket.endpoint
 
   - name: react
-    type: static
+    type: service
     image: node:16-alpine
     root: static/react/
+    port: 4173
     build:
       steps:
         - directory: /react
@@ -44,8 +47,45 @@ components:
         - copy: public/
         - copy: src/
         - run: npm run build
-    assets: dist
-    singlePage: true
+    runtime:
+      command: npm run preview
+
+  # - name: vue
+  #   type: service
+  #   image: node:16-alpine
+  #   root: static/vue/
+  #   port: 4173
+  #   build:
+  #     steps:
+  #       - directory: /vue
+  #       - copy: package*.json
+  #         destination: ./
+  #       - run: npm ci
+  #       - copy: index.html
+  #       - copy: vite.config.js
+  #       - copy: public/
+  #       - copy: src/
+  #       - run: npm run build
+  #   runtime:
+  #     command: npm run preview
+
+  # - name: react
+  #   type: static
+  #   image: node:16-alpine
+  #   root: static/react/
+  #   build:
+  #     steps:
+  #       - directory: /react
+  #       - copy: package*.json
+  #         destination: ./
+  #       - run: npm ci
+  #       - copy: index.html
+  #       - copy: vite.config.js
+  #       - copy: public/
+  #       - copy: src/
+  #       - run: npm run build
+  #   assets: dist
+  #   singlePage: true
 
   # - name: vue
   #   type: static
