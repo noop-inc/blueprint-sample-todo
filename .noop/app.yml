@@ -23,13 +23,13 @@ components:
         AWS_REGION:
           $env: region
         DYNAMODB_TABLE:
-          $env: resources.DynamoDBTable.tableName
+          $resources: resources.DynamoDBTable.tableName
         DYNAMODB_ENDPOINT:
-          $env: resources.DynamoDBTable.endpoint
+          $resources: resources.DynamoDBTable.endpoint
         S3_BUCKET:
-          $env: resources.S3Bucket.bucket
+          $resources: resources.S3Bucket.bucket
         S3_ENDPOINT:
-          $env: resources.S3Bucket.endpoint
+          $resources: resources.S3Bucket.endpoint
 
   - name: react
     type: service
