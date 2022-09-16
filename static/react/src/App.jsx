@@ -148,7 +148,7 @@ const App = () => {
               src={logo}
             />
           </a>
-          <span>Todo Application</span>
+          <span>Super Sample Todo</span>
           <button
             className='form-button'
             title='New Todo'
