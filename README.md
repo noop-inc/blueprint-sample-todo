@@ -1,3 +1,1 @@
 # blueprint-sample-todo
-
-
