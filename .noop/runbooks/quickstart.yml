@@ -17,7 +17,8 @@ workflow:
     - name: Environment
       action: EnvironmentCreate
       params:
-        name: Quickstart Demo
+        name:
+          $inputs: EnvironmentName
         production: false
         appId:
           $runbook: Application.id
