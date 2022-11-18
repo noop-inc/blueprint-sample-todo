@@ -56,9 +56,6 @@ routes:
   - pattern: /**
     target:
       component: react
-  # - pattern: /**
-  #   target:
-  #     component: vue
 resources:
   - name: DynamoDBTable
     type: dynamodb
