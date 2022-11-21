@@ -17,20 +17,19 @@ components:
     runtime:
       command: npm start
       resources:
-        - DynamoDBTable
-        - S3Bucket
+        - TodoItems
+        - TodoUploads
       variables:
         AWS_REGION:
           $env: region
         DYNAMODB_TABLE:
-          $resources: DynamoDBTable.tableName
+          $resources: TodoItems.tableName
         DYNAMODB_ENDPOINT:
-          $resources: DynamoDBTable.endpoint
+          $resources: TodoItems.endpoint
         S3_BUCKET:
-          $resources: S3Bucket.bucket
+          $resources: TodoUploads.bucket
         S3_ENDPOINT:
-          $resources: S3Bucket.endpoint
-
+          $resources: TodoUploads.endpoint
   - name: react
     type: service
     image: node:16-alpine
@@ -53,13 +52,12 @@ routes:
   - pattern: /api/**
     target:
       component: express
-  - pattern: /**
-    target:
+  - target:
       component: react
 resources:
-  - name: DynamoDBTable
+  - name: TodoItems
     type: dynamodb
     hashKeyName: id
     hashKeyType: S
-  - name: S3Bucket
+  - name: TodoUploads
     type: s3
