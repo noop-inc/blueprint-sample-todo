@@ -1,6 +1,7 @@
----
 name: Quickstart Setup
+
 description: Demo full stack setup of this app with internet endpoint
+
 workflow:
   inputs:
     - name: EnvironmentName
@@ -8,11 +9,14 @@ workflow:
       type: string
       required: true
       default: Quickstart Demo
+
     - name: Cluster
       type: Cluster
       description: Which cluster should the environment launch on?
       required: true
+
   timeout: 300
+
   steps:
     - name: Environment
       action: EnvironmentCreate
@@ -24,6 +28,7 @@ workflow:
           $runbook: Application.id
         clusterId:
           $inputs: Cluster.id
+
     - name: Build
       action: BuildExecute
       params:
@@ -31,6 +36,7 @@ workflow:
           $runbook: SourceCode.id
         appId:
           $runbook: Application.id
+
     - name: Resources
       action: ResourceLaunch
       params:
@@ -38,6 +44,7 @@ workflow:
           $steps: Environment.id
         sourceCodeId:
           $runbook: SourceCode.id
+
     - name: Deploy
       action: DeploymentExecute
       params:
@@ -45,6 +52,7 @@ workflow:
           $steps: Environment.id
         buildId:
           $steps: Build.id
+
     - name: Endpoint
       action: InternetEndpointRandom
       params:

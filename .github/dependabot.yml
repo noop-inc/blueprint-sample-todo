@@ -1,5 +1,15 @@
 version: 2
 updates:
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '12:00'
+    labels:
+      - 'dependabot'
+    open-pull-requests-limit: 50
+
   - package-ecosystem: 'npm'
     directory: '/'
     schedule:
@@ -12,7 +22,7 @@ updates:
     versioning-strategy: 'increase'
 
   - package-ecosystem: 'npm'
-    directory: '/service/express'
+    directory: '/api-service'
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -23,18 +33,7 @@ updates:
     versioning-strategy: 'increase'
 
   - package-ecosystem: 'npm'
-    directory: '/static/react'
-    schedule:
-      interval: 'weekly'
-      day: 'monday'
-      time: '12:00'
-    labels:
-      - 'dependabot'
-    open-pull-requests-limit: 50
-    versioning-strategy: 'increase'
-
-  - package-ecosystem: 'npm'
-    directory: '/static/vue'
+    directory: '/website-static'
     schedule:
       interval: 'weekly'
       day: 'monday'
