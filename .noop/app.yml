@@ -31,10 +31,11 @@ components:
           $resources: TodoUploads.endpoint
 
   - name: TodoWebsite
-    type: service
+    type: static
     image: node:18-alpine
     root: website-static
-    port: 4173
+    hosting:
+      spa: true
     build:
       steps:
         - directory: /website-static
@@ -46,8 +47,7 @@ components:
         - copy: public/
         - copy: src/
         - run: npm run build
-    runtime:
-      command: npm run preview
+        - directory: dist/
 
 routes:
   - pattern: /api/**
